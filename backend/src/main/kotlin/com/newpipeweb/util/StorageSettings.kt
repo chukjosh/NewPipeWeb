@@ -8,7 +8,8 @@ import java.io.File
 @Serializable
 data class StorageSettings(
     val downloadsDir: String? = null,
-    val dataDir: String? = null
+    val dataDir: String? = null,
+    val trendingCountry: String? = "US"
 )
 
 /** Repository for reading/writing the settings.json file */
