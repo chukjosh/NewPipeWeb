@@ -59,12 +59,7 @@ export default function ServiceSelector({ value, onChange, filter }: ServiceSele
             {SERVICE_ICONS[service.id] ?? '🌐'} {service.name}
           </option>
         ))}
-      </select>
-
-      {/* Icon overlay on the left of the select */}
-      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-sm">
-        {SERVICE_ICONS[value] ?? '🌐'}
-      </span>
+      </select>  
     </div>
   )
 }

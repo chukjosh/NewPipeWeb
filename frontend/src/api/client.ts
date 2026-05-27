@@ -86,6 +86,16 @@ export const extractorApi = {
 }
 
 // ─────────────────────────────────────────────
+// YouTube-specific helpers
+// ─────────────────────────────────────────────
+
+export const youtubeApi = {
+  /** Get metadata for a YouTube video by ID */
+  getVideo: (id: string) =>
+    api.get<VideoModel>(`/video/${id}`).then(r => r.data),
+}
+
+// ─────────────────────────────────────────────
 // History
 // ─────────────────────────────────────────────
 
@@ -203,7 +213,6 @@ export const downloadApi = {
 export const storageSettingsApi = {
   /** Get current storage paths */
   get: () => api.get<{ downloadsDir: string; dataDir: string }>('/settings/storage').then(r => r.data),
-  /** Update storage paths */
-  update: (payload: { downloadsDir?: string; dataDir?: string }) =>
+  update: (payload: { downloadsDir?: string; dataDir?: string; trendingCountry?: string }) =>
     api.post('/settings/storage', payload),
 };

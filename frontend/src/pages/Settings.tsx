@@ -11,6 +11,7 @@
  * - Privacy (clear history, clear searches)
  */
 
+import React from 'react';
 import { useNavigate } from 'react-router-dom'
 import { Trash2, SkipForward, Info } from 'lucide-react'
 import {
@@ -18,7 +19,7 @@ import {
   SPONSOR_CATEGORY_LABELS,
   type SponsorCategory,
 } from '../store/useAppStore'
-import { useClearHistory } from '../hooks'
+import { useClearHistory, useStorageSettings, useUpdateStorageSettings } from '../hooks'
 
 /** All available SponsorBlock categories in display order */
 const ALL_CATEGORIES: SponsorCategory[] = [
@@ -41,6 +42,15 @@ const QUALITY_OPTIONS = ['2160p', '1440p', '1080p', '720p', '480p', '360p', '240
 export default function Settings() {
   const navigate = useNavigate()
   const clearHistory = useClearHistory()
+
+  // Pull storage settings (including trending country)
+  const { data: storageSettings } = useStorageSettings()
+  const updateSettings = useUpdateStorageSettings()
+  const trendingCountry = storageSettings?.trendingCountry ?? 'US'
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newCountry = e.target.value
+    updateSettings.mutate({ trendingCountry: newCountry })
+  }
 
   // Pull all relevant state from the store
   const {
@@ -73,6 +83,28 @@ export default function Settings() {
       <section>
         <h2 className="text-lg font-semibold mb-4 text-neutral-200">Appearance</h2>
         <div className="bg-neutral-900 rounded-xl p-4 space-y-4">
+
+          {/* Trending country selector */}
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium">Trending Country</p>
+              <p className="text-xs text-neutral-400 mt-0.5">Default is US. Change to view other region trends.</p>
+            </div>
+            <select
+              value={trendingCountry}
+              onChange={handleCountryChange}
+              className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-red-500"
+            >
+              {/* Add more country codes as needed */}
+              <option value="US">United States</option>
+              <option value="GB">United Kingdom</option>
+              <option value="CA">Canada</option>
+              <option value="DE">Germany</option>
+              <option value="FR">France</option>
+              <option value="JP">Japan</option>
+              <option value="AU">Australia</option>
+            </select>
+          </div>
 
           {/* Theme toggle */}
           <div className="flex items-center justify-between">

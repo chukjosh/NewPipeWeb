@@ -321,7 +321,10 @@ object ExtractorService {
 
         return try {
             val kioskInfo = KioskInfo.getInfo(service, kioskUrl)
+            println("DEBUG: getTrending($serviceName) - kioskInfo.relatedItems length: ${kioskInfo.relatedItems.size}")
+            
             kioskInfo.relatedItems
+                .toList()
                 .filterNotNull()
                 .take(30)
                 .mapNotNull { item ->
@@ -345,6 +348,8 @@ object ExtractorService {
                     }
                 }
         } catch (e: Exception) {
+            println("ERROR: getTrending($serviceName) failed - ${e.message}")
+            e.printStackTrace()
             emptyList()
         }
     }

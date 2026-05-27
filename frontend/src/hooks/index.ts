@@ -1,4 +1,5 @@
-import { storageSettingsApi } from '../api/client'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { storageSettingsApi, extractorApi, youtubeApi, historyApi, watchlistApi, playlistApi, subscriptionApi, feedApi, downloadApi } from '../api/client';
 
 export function useStorageSettings() {
   return useQuery({
