@@ -2,6 +2,7 @@
 import { useHistory, useDeleteHistory, useClearHistory } from '../hooks'
 import { LoadingSpinner, EmptyState } from '../components/common'
 import { useNavigate } from 'react-router-dom'
+import { watchPath } from '../utils/playback'
 import { Trash2 } from 'lucide-react'
 
 export function History() {
@@ -27,10 +28,10 @@ export function History() {
             <img
               src={item.thumbnailUrl} alt={item.title}
               className="w-28 aspect-video object-cover rounded-lg bg-neutral-800 shrink-0 cursor-pointer"
-              onClick={() => navigate(`/watch/${item.videoId}`)}
+              onClick={() => navigate(watchPath({ id: item.videoId, url: item.url }))}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
-            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/watch/${item.videoId}`)}>
+            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => navigate(watchPath({ id: item.videoId, url: item.url }))}>
               <p className="font-medium text-sm line-clamp-2">{item.title}</p>
               <p className="text-xs text-neutral-400 mt-1">{item.uploader}</p>
               <p className="text-xs text-neutral-500 mt-0.5">{new Date(item.watchedAt).toLocaleString()}</p>

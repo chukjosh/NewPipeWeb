@@ -17,7 +17,8 @@
  */
 
 import { useParams, useSearchParams, Link } from 'react-router-dom'
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import Hls from 'hls.js'
 import {
   useStream, useComments, useAddToHistory,
   useSubscribe, useSubscriptions, useUnsubscribe,
@@ -36,12 +37,17 @@ import {
   Headphones, Subtitles, SkipForward, Settings,
 } from 'lucide-react'
 import type { StreamUrl, SubtitleTrack } from '../types'
+import { pickDefaultStream, proxyMediaUrl, isHlsSource } from '../utils/playback'
 
 export default function Watch() {
   const { id } = useParams<{ id: string }>()
   const [searchParams] = useSearchParams()
   // Support both /watch/:id (YouTube) and /watch?url= (any service)
   const contentUrl = searchParams.get('url') ?? (id ? `https://www.youtube.com/watch?v=${id}` : '')
+  const youtubeVideoId =
+    id ??
+    contentUrl.match(/[?&]v=([^&]+)/)?.[1] ??
+    ''
 
   // ─── Data fetching ────────────────────────────────────────
   const { data: stream, isLoading, isError, refetch } = useStream(contentUrl)
@@ -73,6 +79,8 @@ export default function Watch() {
   const trackRef = useRef<HTMLTrackElement>(null)
 
   const [selectedStream,   setSelectedStream]   = useState<StreamUrl | null>(null)
+  const [useHls,           setUseHls]           = useState(false)
+  const [hlsSourceUrl,     setHlsSourceUrl]     = useState<string | null>(null)
   const [selectedSubtitle, setSelectedSubtitle] = useState<SubtitleTrack | null>(null)
   const [showComments,     setShowComments]      = useState(false)
   const [showPlaylistModal,setShowPlaylistModal] = useState(false)
@@ -81,7 +89,19 @@ export default function Watch() {
   const [lastSkipLabel,    setLastSkipLabel]      = useState<string | null>(null) // toast message
 
   // ─── SponsorBlock ─────────────────────────────────────────
-  const { segments, getSkipTarget } = useSponsorBlock(id ?? '')
+  const isYoutube = stream?.service === 'youtube'
+  const { segments, getSkipTarget } = useSponsorBlock(
+    isYoutube ? youtubeVideoId : '',
+  )
+
+  const contentKey = stream?.id ?? id ?? contentUrl
+
+  const playbackSourceUrl = useMemo(() => {
+    if (useHls && hlsSourceUrl) return hlsSourceUrl
+    return selectedStream?.url ?? ''
+  }, [useHls, hlsSourceUrl, selectedStream?.url])
+
+  const playbackUrl = playbackSourceUrl ? proxyMediaUrl(playbackSourceUrl) : ''
 
   // ─────────────────────────────────────────────────────────
   // On stream load: pick best quality stream + restore resume position
@@ -89,17 +109,42 @@ export default function Watch() {
   useEffect(() => {
     if (!stream) return
 
-    // Pick the best matching quality stream based on user preference
-    const nonVideoOnly = stream.videoStreams.filter(s => !s.isVideoOnly)
-    const preferred = nonVideoOnly.find(s => s.quality.startsWith(preferredQuality))
-    setSelectedStream(preferred ?? nonVideoOnly[0] ?? stream.videoStreams[0] ?? null)
+    const picked = pickDefaultStream(stream, preferredQuality)
+    setSelectedStream(picked.stream)
+    setUseHls(picked.useHls)
+    setHlsSourceUrl(picked.hlsUrl)
 
-    // Pick subtitle track matching preferred language (if subtitles enabled)
     if (subtitlesEnabled && stream.subtitles.length > 0) {
       const preferred = stream.subtitles.find(s => s.languageCode === preferredSubtitleLang)
       setSelectedSubtitle(preferred ?? stream.subtitles[0])
     }
-  }, [stream?.id])
+  }, [stream?.id, preferredQuality, subtitlesEnabled, preferredSubtitleLang])
+
+  // HLS playback (PeerTube and other HLS-only sources)
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !playbackUrl || !useHls) return
+
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = playbackUrl
+      return
+    }
+
+    if (!Hls.isSupported()) return
+
+    const hls = new Hls({
+      xhrSetup: (xhr, url) => {
+        xhr.open('GET', proxyMediaUrl(url), true)
+      },
+    })
+    hls.loadSource(playbackUrl)
+    hls.attachMedia(video)
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      video.play().catch(() => {})
+    })
+
+    return () => hls.destroy()
+  }, [playbackUrl, useHls])
 
   // ─────────────────────────────────────────────────────────
   // Restore resume position after video element loads
@@ -108,12 +153,12 @@ export default function Watch() {
     if (!videoRef.current || !id || !history) return
 
     // Find the last watch position for this video from history
-    const entry = history.find(h => h.videoId === id)
+    const entry = history.find(h => h.videoId === contentKey)
     if (entry && entry.watchedSeconds > 10) {
       // Only restore if more than 10 seconds in (ignore near-start)
       videoRef.current.currentTime = entry.watchedSeconds
     }
-  }, [selectedStream?.url, history])
+  }, [playbackUrl, history, contentKey])
 
   // ─────────────────────────────────────────────────────────
   // Sync volume and playback rate from stored preferences
@@ -122,15 +167,15 @@ export default function Watch() {
     if (!videoRef.current) return
     videoRef.current.volume       = volume
     videoRef.current.playbackRate = playbackRate
-  }, [selectedStream?.url])
+  }, [playbackUrl])
 
   // ─────────────────────────────────────────────────────────
   // Add to history when video first loads
   // ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (stream && id) {
+    if (stream && contentKey) {
       addToHistory.mutate({
-        videoId:      id,
+        videoId:      contentKey,
         title:        stream.title,
         uploader:     stream.uploader,
         thumbnailUrl: stream.videoStreams[0]?.url ?? '',
@@ -145,10 +190,10 @@ export default function Watch() {
   // ─────────────────────────────────────────────────────────
   const handleTimeUpdate = useCallback(() => {
     const video = videoRef.current
-    if (!video || !stream || !id) return
+    if (!video || !stream || !contentKey) return
 
     // SponsorBlock: check if we should skip the current position
-    if (sponsorBlockEnabled) {
+    if (sponsorBlockEnabled && isYoutube) {
       const skipTo = getSkipTarget(video.currentTime)
       if (skipTo !== null) {
         video.currentTime = skipTo
@@ -167,7 +212,7 @@ export default function Watch() {
     const currentSec = Math.floor(video.currentTime)
     if (currentSec > 0 && currentSec % 5 === 0) {
       addToHistory.mutate({
-        videoId:       id,
+        videoId:       contentKey,
         title:         stream.title,
         uploader:      stream.uploader,
         thumbnailUrl:  '',
@@ -175,7 +220,7 @@ export default function Watch() {
         watchedSeconds: currentSec,
       })
     }
-  }, [stream?.id, sponsorBlockEnabled, segments, getSkipTarget])
+  }, [stream?.id, sponsorBlockEnabled, segments, getSkipTarget, contentKey, isYoutube])
 
   // ─────────────────────────────────────────────────────────
   // Volume + playback rate change handlers (persist to store)
@@ -225,7 +270,6 @@ export default function Watch() {
     setBackgroundAudioMode(newMode)
 
     if (newMode && stream.audioStreams.length > 0) {
-      // Switch to the highest bitrate audio-only stream
       const bestAudio = stream.audioStreams[0]
       setSelectedStream({
         url:         bestAudio.url,
@@ -233,11 +277,13 @@ export default function Watch() {
         format:      bestAudio.format,
         isVideoOnly: false,
       })
+      setUseHls(isHlsSource(bestAudio.url, bestAudio.format))
+      setHlsSourceUrl(null)
     } else if (!newMode) {
-      // Switch back to video stream
-      const nonVideoOnly = stream.videoStreams.filter(s => !s.isVideoOnly)
-      const preferred = nonVideoOnly.find(s => s.quality.startsWith(preferredQuality))
-      setSelectedStream(preferred ?? nonVideoOnly[0] ?? null)
+      const picked = pickDefaultStream(stream, preferredQuality)
+      setSelectedStream(picked.stream)
+      setUseHls(picked.useHls)
+      setHlsSourceUrl(picked.hlsUrl)
     }
   }
 
@@ -261,15 +307,15 @@ export default function Watch() {
   // ─────────────────────────────────────────────────────────
   // Watchlist toggle
   // ─────────────────────────────────────────────────────────
-  const watchlistEntry = watchlist?.find(w => w.videoId === id)
+  const watchlistEntry = watchlist?.find(w => w.videoId === contentKey)
 
   const handleWatchlistToggle = () => {
-    if (!stream || !id) return
+    if (!stream || !contentKey) return
     if (watchlistEntry) {
       removeFromWatchlist.mutate(watchlistEntry.id)
     } else {
       addToWatchlist.mutate({
-        videoId:      id,
+        videoId:      contentKey,
         title:        stream.title,
         uploader:     stream.uploader,
         thumbnailUrl: stream.videoStreams[0]?.url ?? '',
@@ -281,17 +327,17 @@ export default function Watch() {
   // ─────────────────────────────────────────────────────────
   // Subscribe / unsubscribe
   // ─────────────────────────────────────────────────────────
-  const sub = subscriptions?.find(s => s.channelId === id)
+  const sub = subscriptions?.find(s => s.channelId === contentKey)
 
   const handleSubscribeToggle = () => {
-    if (!stream) return
+    if (!stream || !stream.uploaderUrl) return
     if (sub) {
       unsubscribe.mutate(sub.id)
     } else {
       subscribe.mutate({
-        channelId:   id ?? '',
+        channelId:   contentKey,
         channelName: stream.uploader,
-        channelUrl:  `https://www.youtube.com/channel/${id}`,
+        channelUrl:  stream.uploaderUrl,
         avatarUrl:   '',
       })
     }
@@ -300,6 +346,9 @@ export default function Watch() {
   // ─────────────────────────────────────────────────────────
   // Render
   // ─────────────────────────────────────────────────────────
+  if (!contentUrl) {
+    return <ErrorMessage message="No video URL provided." />
+  }
   if (isLoading) return <LoadingSpinner text="Loading video..." />
   if (isError || !stream) return <ErrorMessage message="Could not load video." onRetry={refetch} />
 
@@ -311,40 +360,30 @@ export default function Watch() {
 
         {/* ── Video player ──────────────────────────────── */}
         <div className="aspect-video bg-black rounded-xl overflow-hidden relative">
-          {selectedStream ? (
+          {playbackUrl ? (
             <video
               ref={videoRef}
-              key={selectedStream.url}
-              src={selectedStream.url}
+              key={playbackUrl}
+              src={useHls ? undefined : playbackUrl}
               controls
               autoPlay
+              playsInline
               className="w-full h-full"
               onTimeUpdate={handleTimeUpdate}
               onVolumeChange={handleVolumeChange}
               onRateChange={handleRateChange}
             >
-              {/* Subtitle track — only rendered when a track is selected */}
-              {selectedSubtitle && subtitlesEnabled && (
+              {selectedSubtitle && subtitlesEnabled && !useHls && (
                 <track
                   ref={trackRef}
                   kind="subtitles"
-                  src={selectedSubtitle.url}
+                  src={proxyMediaUrl(selectedSubtitle.url)}
                   srcLang={selectedSubtitle.languageCode}
                   label={selectedSubtitle.languageName}
                   default
                 />
               )}
             </video>
-          ) : stream.hlsUrl ? (
-            // Live stream fallback — use HLS URL directly
-            <video
-              ref={videoRef}
-              src={stream.hlsUrl}
-              controls
-              autoPlay
-              className="w-full h-full"
-              onTimeUpdate={handleTimeUpdate}
-            />
           ) : (
             <div className="flex items-center justify-center h-full text-neutral-400">
               No playable stream found
@@ -424,7 +463,11 @@ export default function Watch() {
               .map(s => (
                 <button
                   key={s.url}
-                  onClick={() => setSelectedStream(s)}
+                  onClick={() => {
+                    setSelectedStream(s)
+                    setUseHls(isHlsSource(s.url, s.format))
+                    setHlsSourceUrl(null)
+                  }}
                   className={`text-xs px-2.5 py-1 rounded-lg transition-colors
                     ${selectedStream?.url === s.url
                       ? 'bg-red-600 text-white'

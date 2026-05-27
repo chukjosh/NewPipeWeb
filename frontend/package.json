@@ -1,6 +1,5 @@
 {
   "type": "module",
-
   "name": "newpipeweb-frontend",
   "version": "1.0.0",
   "description": "A full-featured, self-hosted frontend for YouTube, SoundCloud, PeerTube and more, built on top of NewPipeExtractor.",
@@ -12,15 +11,16 @@
     "lint": "eslint src --ext ts,tsx"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.23.1",
     "@tanstack/react-query": "^5.40.0",
-    "zustand": "^4.5.2",
     "axios": "^1.7.2",
     "clsx": "^2.1.1",
+    "hls.js": "^1.6.16",
+    "lucide-react": "^0.383.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-player": "^2.16.0",
-    "lucide-react": "^0.383.0"
+    "react-router-dom": "^6.23.1",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",

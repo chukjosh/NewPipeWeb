@@ -46,6 +46,7 @@ export default function App() {
             <main className="flex-1 overflow-y-auto">
               <Routes>
                 <Route path="/"               element={<Home />}          />
+                <Route path="/watch"          element={<Watch />}         />
                 <Route path="/watch/:id"      element={<Watch />}         />
                 <Route path="/search"         element={<Search />}        />
                 <Route path="/channel/:id"    element={<Channel />}       />

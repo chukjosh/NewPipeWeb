@@ -85,6 +85,13 @@ object ExtractorService {
         val supportsComments: Boolean
     )
 
+    private val SERVICE_NAME_BY_EXTRACTOR_ID: Map<Int, String> =
+        SUPPORTED_SERVICES.entries.associate { (key, info) -> info.id to key }
+
+    /** Maps NewPipeExtractor service IDs to our API service keys (e.g. 2 → "mediaccc"). */
+    fun serviceKeyFromExtractorId(serviceId: Int): String =
+        SERVICE_NAME_BY_EXTRACTOR_ID[serviceId] ?: "unknown"
+
     /**
      * Resolve a service name string to the NewPipeExtractor StreamingService.
      * Defaults to YouTube if the name is unrecognised.
@@ -222,7 +229,7 @@ object ExtractorService {
                         thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
                         isLive       = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                         url          = item.url ?: "",
-                        service      = service.serviceInfo.name.lowercase()
+                        service      = serviceKeyFromExtractorId(service.serviceId)
                     )
                 } catch (e: Exception) {
                     null
@@ -240,7 +247,7 @@ object ExtractorService {
             hlsUrl        = streamInfo.hlsUrl,
             subtitles     = subtitles,
             relatedVideos = related,
-            service       = service.serviceInfo.name.lowercase()
+            service       = serviceKeyFromExtractorId(service.serviceId)
         )
     }
 

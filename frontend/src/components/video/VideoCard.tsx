@@ -11,6 +11,7 @@
 
 import { useNavigate } from 'react-router-dom'
 import { ServiceBadge } from '../common'
+import { watchPath } from '../../utils/playback'
 import type { VideoModel } from '../../types'
 
 /** Format seconds as M:SS or H:MM:SS */
@@ -42,12 +43,7 @@ export default function VideoCard({ video }: VideoCardProps) {
    * We encode the full URL so the backend can auto-detect the service.
    * For YouTube this is a short ID; for others it's the full URL.
    */
-  const handleClick = () => {
-    const dest = video.service === 'youtube' || !video.url
-      ? `/watch/${video.id}`
-      : `/watch?url=${encodeURIComponent(video.url)}`
-    navigate(dest)
-  }
+  const handleClick = () => navigate(watchPath(video))
 
   return (
     <div onClick={handleClick} className="card group cursor-pointer">

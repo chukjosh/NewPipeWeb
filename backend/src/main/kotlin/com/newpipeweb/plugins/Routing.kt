@@ -19,6 +19,7 @@ fun Application.configureRouting() {
         servicesRoutes()     // GET /services — list supported platforms
         searchRoutes()       // GET /search?q=&service=
         streamRoutes()       // GET /stream?url= or /stream/{youtubeId}
+        streamProxyRoutes()  // GET /proxy?url= — CORS-safe media playback
         channelRoutes()      // GET /channel?url= or /channel/{youtubeId}
         trendingRoutes()     // GET /trending?service=
         commentRoutes()      // GET /comments?url= or /comments/{youtubeId}
