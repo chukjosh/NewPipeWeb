@@ -12,7 +12,6 @@ import org.schabi.newpipe.extractor.channel.tabs.ChannelTabInfo
 import org.schabi.newpipe.extractor.stream.VideoStream
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.channel.ChannelInfo
-import org.schabi.newpipe.extractor.kiosk.KioskInfo
 
 object YouTubeService {
 
@@ -218,32 +217,8 @@ object YouTubeService {
     // TRENDING
     // ─────────────────────────────────────────
 
-    fun getTrending(): List<VideoModel> {
-        val kioskInfo = KioskInfo.getInfo(YouTube, "https://www.youtube.com/feed/trending")
-
-        return kioskInfo.relatedItems
-            .filterNotNull()
-            .take(30)
-            .mapNotNull { item ->
-                if (item !is StreamInfoItem) return@mapNotNull null
-                try {
-                    VideoModel(
-                        id = extractVideoId(item.url),
-                        title = item.name ?: "Unknown",
-                        uploader = item.uploaderName ?: "Unknown",
-                        uploaderUrl = item.uploaderUrl ?: "",
-                        duration = item.duration,
-                        viewCount = item.viewCount,
-                        uploadDate = item.textualUploadDate ?: "",
-                        thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
-                        isLive = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
-                        url = item.url ?: ""
-                    )
-                } catch (e: Exception) {
-                    null
-                }
-            }
-    }
+    fun getTrending(): List<VideoModel> =
+        ExtractorService.getTrending("youtube")
 
     // ─────────────────────────────────────────
     // COMMENTS

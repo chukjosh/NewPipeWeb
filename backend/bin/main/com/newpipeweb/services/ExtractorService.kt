@@ -30,17 +30,31 @@ import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.channel.ChannelInfo
 import org.schabi.newpipe.extractor.comments.CommentsInfo
+import org.schabi.newpipe.extractor.InfoItem
 import org.schabi.newpipe.extractor.kiosk.KioskInfo
 import org.schabi.newpipe.extractor.localization.ContentCountry
+import org.schabi.newpipe.extractor.localization.Localization
 import org.schabi.newpipe.extractor.search.SearchInfo
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
 import org.schabi.newpipe.extractor.stream.StreamType
 import org.schabi.newpipe.extractor.channel.tabs.ChannelTabs
 import org.schabi.newpipe.extractor.channel.tabs.ChannelTabInfo
-import org.schabi.newpipe.extractor.ServiceList
 
 object ExtractorService {
+
+    private const val TRENDING_LIMIT = 30
+
+    /**
+     * YouTube removed the combined /feed/trending page in 2025.
+     * These replacement kiosks are what NewPipeExtractor v0.26+ exposes instead.
+     */
+    private val YOUTUBE_TRENDING_KIOSK_URLS = listOf(
+        "https://www.youtube.com/gaming/trending",
+        "https://charts.youtube.com/charts/TrendingVideos/RightNow",
+        "https://www.youtube.com/podcasts/popularepisodes",
+        "https://charts.youtube.com/charts/TrendingTrailers",
+    )
 
     // ─────────────────────────────────────────────────────────
     // Service registry — maps string names to NewPipe services
@@ -312,64 +326,114 @@ object ExtractorService {
         if (!serviceInfo.supportsTrending) return emptyList()
 
         val service = NewPipe.getService(serviceInfo.id)
-        if (normalizedService == "youtube") {
-            // Use the user-selected country for region-specific YouTube trending.
-            val countryCode = StorageSettingsRepository.load()
-                ?.trendingCountry
-                ?.trim()
-                ?.uppercase()
-                ?.takeIf { it.isNotBlank() }
-            if (countryCode != null) {
-                try {
-                    service.kioskList.forceContentCountry(ContentCountry(countryCode))
-                } catch (_: Exception) {
-                    // Ignore invalid country codes and fall back to extractor defaults.
-                }
-            }
-        }
-
-        // Each service has a different kiosk URL for trending/featured content
-        val kioskUrl = when (normalizedService) {
-            "youtube"    -> "https://www.youtube.com/feed/trending"
-            "soundcloud" -> "https://soundcloud.com/charts/top"
-            "mediaccc"   -> "https://media.ccc.de/recent"
-            "peertube"   -> "https://peertube.tv/videos/trending"
-            else         -> serviceInfo.baseUrl
-        }
 
         return try {
-            val kioskInfo = KioskInfo.getInfo(service, kioskUrl)
-            println("DEBUG: getTrending($serviceName) - kioskInfo.relatedItems length: ${kioskInfo.relatedItems.size}")
-            
-            kioskInfo.relatedItems
-                .toList()
-                .filterNotNull()
-                .take(30)
-                .mapNotNull { item ->
-                    if (item !is StreamInfoItem) return@mapNotNull null
-                    try {
-                        VideoModel(
-                            id           = extractId(item.url),
-                            title        = item.name ?: "Unknown",
-                            uploader     = item.uploaderName ?: "Unknown",
-                            uploaderUrl  = item.uploaderUrl ?: "",
-                            duration     = item.duration,
-                            viewCount    = item.viewCount,
-                            uploadDate   = item.textualUploadDate ?: "",
-                            thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
-                            isLive       = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
-                            url          = item.url ?: "",
-                            service      = serviceName
-                        )
-                    } catch (e: Exception) {
-                        null
-                    }
+            if (normalizedService == "youtube") {
+                val countryCode = StorageSettingsRepository.load()
+                    ?.trendingCountry
+                    ?.trim()
+                    ?.uppercase()
+                    ?.takeIf { it.isNotBlank() }
+                getYoutubeTrending(service, countryCode)
+            } else {
+                val kioskUrl = when (normalizedService) {
+                    "soundcloud" -> "https://soundcloud.com/charts/top"
+                    "mediaccc"   -> "https://media.ccc.de/recent"
+                    "peertube"   -> "https://peertube.tv/videos/trending"
+                    else         -> serviceInfo.baseUrl
                 }
+                fetchKioskVideos(service, kioskUrl, normalizedService, TRENDING_LIMIT)
+            }
         } catch (e: Exception) {
             println("ERROR: getTrending($serviceName) failed - ${e.message}")
             e.printStackTrace()
             emptyList()
         }
+    }
+
+    private fun applyYoutubeTrendingCountry(service: StreamingService, countryCode: String?) {
+        if (countryCode.isNullOrBlank()) return
+        try {
+            val country = ContentCountry(countryCode)
+            NewPipe.setupLocalization(Localization("en", countryCode), country)
+            service.kioskList.forceContentCountry(country)
+        } catch (_: Exception) {
+            // Ignore invalid country codes and fall back to extractor defaults.
+        }
+    }
+
+    /**
+     * YouTube no longer has a single trending feed. Merge items from the
+     * category-specific trending kiosks NewPipeExtractor supports.
+     */
+    private fun getYoutubeTrending(service: StreamingService, countryCode: String?): List<VideoModel> {
+        applyYoutubeTrendingCountry(service, countryCode)
+
+        val seenIds = LinkedHashSet<String>()
+        val videos = mutableListOf<VideoModel>()
+
+        for (kioskUrl in YOUTUBE_TRENDING_KIOSK_URLS) {
+            if (videos.size >= TRENDING_LIMIT) break
+            try {
+                val batch = fetchKioskVideos(
+                    service,
+                    kioskUrl,
+                    "youtube",
+                    TRENDING_LIMIT - videos.size
+                )
+                for (video in batch) {
+                    if (seenIds.add(video.id)) {
+                        videos.add(video)
+                        if (videos.size >= TRENDING_LIMIT) break
+                    }
+                }
+            } catch (e: Exception) {
+                println("WARN: YouTube kiosk $kioskUrl failed - ${e.message}")
+            }
+        }
+
+        println("DEBUG: getTrending(youtube) - ${videos.size} videos from ${YOUTUBE_TRENDING_KIOSK_URLS.size} kiosks")
+        return videos
+    }
+
+    private fun fetchKioskVideos(
+        service: StreamingService,
+        kioskUrl: String,
+        serviceName: String,
+        limit: Int,
+    ): List<VideoModel> {
+        val kioskInfo = KioskInfo.getInfo(service, kioskUrl)
+        return mapKioskItemsToVideos(kioskInfo.relatedItems, serviceName, limit)
+    }
+
+    private fun mapKioskItemsToVideos(
+        items: List<InfoItem>,
+        serviceName: String,
+        limit: Int,
+    ): List<VideoModel> {
+        return items
+            .filterNotNull()
+            .take(limit)
+            .mapNotNull { item ->
+                if (item !is StreamInfoItem) return@mapNotNull null
+                try {
+                    VideoModel(
+                        id           = extractId(item.url),
+                        title        = item.name ?: "Unknown",
+                        uploader     = item.uploaderName ?: "Unknown",
+                        uploaderUrl  = item.uploaderUrl ?: "",
+                        duration     = item.duration,
+                        viewCount    = item.viewCount,
+                        uploadDate   = item.textualUploadDate ?: "",
+                        thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
+                        isLive       = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
+                        url          = item.url ?: "",
+                        service      = serviceName
+                    )
+                } catch (_: Exception) {
+                    null
+                }
+            }
     }
 
     // ─────────────────────────────────────────────────────────

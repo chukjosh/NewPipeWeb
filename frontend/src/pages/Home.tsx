@@ -58,7 +58,10 @@ export default function Home() {
       {/* Content */}
       {isLoading && <LoadingSpinner text={`Loading ${activeService} trending...`} />}
       {isError   && <ErrorMessage message="Could not load trending content." onRetry={refetch} />}
-      {data      && <VideoGrid videos={data} title="🔥 Trending" />}
+      {!isLoading && !isError && data && data.length === 0 && (
+        <ErrorMessage message="No trending content available for this service." onRetry={refetch} />
+      )}
+      {data && data.length > 0 && <VideoGrid videos={data} title="🔥 Trending" />}
     </div>
   )
 }
