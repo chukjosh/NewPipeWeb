@@ -53,6 +53,7 @@ dependencies {
 
     // Logging
     implementation("ch.qos.logback:logback-classic:1.5.6")
+    implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")
 
     // Testing
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")

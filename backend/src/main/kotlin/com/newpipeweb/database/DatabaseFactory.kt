@@ -1,6 +1,7 @@
 package com.newpipeweb.database
 
 import com.newpipeweb.database.tables.*
+import com.newpipeweb.util.Paths.resolveDataDir
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -10,7 +11,7 @@ object DatabaseFactory {
 
     fun init() {
         // Store the database file in /app/data (Docker volume) or ./data (local)
-        val dataDir = File(System.getenv("DATA_DIR") ?: "./data")
+        val dataDir = resolveDataDir()
         dataDir.mkdirs()
 
         val dbPath = "${dataDir.absolutePath}/newpipe.db"

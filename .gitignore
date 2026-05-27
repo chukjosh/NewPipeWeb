@@ -1,70 +1,25 @@
-# =========================
-# 🔥 GRADLE / JAVA / KOTLIN BACKEND
-# =========================
+# .gitignore for NewPipeWeb project
+# Database and downloads — these are user data, not source code
+data/
+downloads/
+*.db
 
-/backend/build/
-/backend/out/
-/backend/.gradle/
-/backend/**/build/
-/backend/data/
-/backend/dist/
-/backend/.kotlin/
-/backend/.idea/
-/backend/.local/
-/backend/.cache/
-/backend/.vscode/
+# Gradle
+backend/.gradle/
+backend/build/
 
-*.class
-*.jar
-*.war
-*.ear
+# Node
+frontend/node_modules/
+frontend/dist/
 
-# Gradle wrapper cache (optional safety ignore)
-.gradle/
+# Rust/Tauri
+desktop/src-tauri/target/
 
-# IntelliJ / IDE files
-*.iml
-.idea/
-out/
-
-# Logs
-*.log
-
-
-# =========================
-# ⚡ VITE / NODE / FRONTEND
-# =========================
-
-/frontend/node_modules/
-/frontend/dist/
-/frontend/.vite/
-
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# env files (VERY IMPORTANT)
+# Environment
 .env
-.env.local
-.env.*.local
+backend/.env
 
-
-# =========================
-# 💻 OS FILES
-# =========================
-
+# IDE
+.idea/
+*.iml
 .DS_Store
-Thumbs.db
-
-# =========================
-# 🧪 TEST / COVERAGE
-# =========================
-
-coverage/
-
-# =========================
-# 🔐 LOCAL CONFIGS
-# =========================
-
-*.local

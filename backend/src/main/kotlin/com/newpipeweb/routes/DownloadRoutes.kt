@@ -14,7 +14,7 @@ import io.ktor.server.routing.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.File
+import com.newpipeweb.util.Paths.resolveDownloadsDir
 
 private val httpClient = HttpClient(CIO)
 
@@ -30,7 +30,7 @@ fun Route.downloadRoutes() {
         post {
             val request = call.receive<StartDownloadRequest>()
 
-            val downloadsDir = File(System.getenv("DOWNLOADS_DIR") ?: "./downloads")
+            val downloadsDir = resolveDownloadsDir()
             downloadsDir.mkdirs()
 
             val ext = if (request.isAudioOnly) "m4a" else "mp4"
