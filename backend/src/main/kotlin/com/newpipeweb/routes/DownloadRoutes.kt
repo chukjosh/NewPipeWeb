@@ -11,10 +11,13 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.utils.io.*
+import com.newpipeweb.util.resolveDownloadsDir
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import com.newpipeweb.util.Paths.resolveDownloadsDir
+import io.ktor.utils.io.readAvailable
+
+
 
 private val httpClient = HttpClient(CIO)
 
@@ -59,10 +62,10 @@ fun Route.downloadRoutes() {
                         outputFile.outputStream().use { outputStream ->
                             val buffer = ByteArray(8192)
                             while (!channel.isClosedForRead) {
-                                val read = channel.readAvailable(buffer)
+                                val read = channel.readAvailable(buffer, 0, buffer.size)
                                 if (read > 0) {
                                     outputStream.write(buffer, 0, read)
-                                    downloadedBytes += read
+                                    downloadedBytes += read.toLong()
                                     DownloadRepository.updateProgress(
                                         downloadId, downloadedBytes, contentLength
                                     )

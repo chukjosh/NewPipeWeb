@@ -1,7 +1,7 @@
 package com.newpipeweb.database
 
 import com.newpipeweb.database.tables.*
-import com.newpipeweb.util.Paths.resolveDataDir
+import com.newpipeweb.util.resolveDataDir
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction

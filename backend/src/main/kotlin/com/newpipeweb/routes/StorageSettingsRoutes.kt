@@ -1,7 +1,7 @@
 package com.newpipeweb.routes
 
-import com.newpipeweb.util.Paths.resolveDataDir
-import com.newpipeweb.util.Paths.resolveDownloadsDir
+import com.newpipeweb.util.resolveDataDir
+import com.newpipeweb.util.resolveDownloadsDir
 import com.newpipeweb.util.StorageSettingsRepository
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -23,20 +23,22 @@ fun Route.storageSettingsRoutes() {
             // Resolve current effective paths
             val current = mapOf(
                 "downloadsDir" to resolveDownloadsDir().absolutePath,
-                "dataDir" to resolveDataDir().absolutePath
+                "dataDir" to resolveDataDir().absolutePath,
+                "trendingCountry" to (StorageSettingsRepository.load()?.trendingCountry ?: "US")
             )
             call.respond(current)
         }
         post {
             // Accept a JSON body with optional overrides
             @Serializable
-            data class SettingsPayload(val downloadsDir: String? = null, val dataDir: String? = null)
+            data class SettingsPayload(val downloadsDir: String? = null, val dataDir: String? = null, val trendingCountry: String? = null)
             val payload = call.receive<SettingsPayload>()
             // Load existing settings (if any)
             val existing = StorageSettingsRepository.load()
             val newSettings = com.newpipeweb.util.StorageSettings(
                 downloadsDir = payload.downloadsDir ?: existing?.downloadsDir,
-                dataDir = payload.dataDir ?: existing?.dataDir
+                dataDir = payload.dataDir ?: existing?.dataDir,
+                trendingCountry = payload.trendingCountry ?: existing?.trendingCountry ?: "US"
             )
             // Persist the new settings
             StorageSettingsRepository.save(newSettings)
