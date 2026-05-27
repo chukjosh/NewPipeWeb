@@ -25,11 +25,13 @@
 package com.newpipeweb.services
 
 import com.newpipeweb.models.*
+import com.newpipeweb.util.StorageSettingsRepository
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.StreamingService
 import org.schabi.newpipe.extractor.channel.ChannelInfo
 import org.schabi.newpipe.extractor.comments.CommentsInfo
 import org.schabi.newpipe.extractor.kiosk.KioskInfo
+import org.schabi.newpipe.extractor.localization.ContentCountry
 import org.schabi.newpipe.extractor.search.SearchInfo
 import org.schabi.newpipe.extractor.stream.StreamInfo
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
@@ -303,18 +305,34 @@ object ExtractorService {
      * @param serviceName Service to fetch trending from
      */
     fun getTrending(serviceName: String = "youtube"): List<VideoModel> {
-        val serviceInfo = SUPPORTED_SERVICES[serviceName.lowercase()]
+        val normalizedService = serviceName.lowercase()
+        val serviceInfo = SUPPORTED_SERVICES[normalizedService]
             ?: SUPPORTED_SERVICES["youtube"]!!
 
         if (!serviceInfo.supportsTrending) return emptyList()
 
         val service = NewPipe.getService(serviceInfo.id)
+        if (normalizedService == "youtube") {
+            // Use the user-selected country for region-specific YouTube trending.
+            val countryCode = StorageSettingsRepository.load()
+                ?.trendingCountry
+                ?.trim()
+                ?.uppercase()
+                ?.takeIf { it.isNotBlank() }
+            if (countryCode != null) {
+                try {
+                    service.kioskList.forceContentCountry(ContentCountry(countryCode))
+                } catch (_: Exception) {
+                    // Ignore invalid country codes and fall back to extractor defaults.
+                }
+            }
+        }
 
         // Each service has a different kiosk URL for trending/featured content
-        val kioskUrl = when (serviceName.lowercase()) {
+        val kioskUrl = when (normalizedService) {
             "youtube"    -> "https://www.youtube.com/feed/trending"
             "soundcloud" -> "https://soundcloud.com/charts/top"
-            "mediaccc"   -> "https://media.ccc.de"
+            "mediaccc"   -> "https://media.ccc.de/recent"
             "peertube"   -> "https://peertube.tv/videos/trending"
             else         -> serviceInfo.baseUrl
         }
