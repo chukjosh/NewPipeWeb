@@ -1,8 +1,21 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  extractorApi, historyApi, watchlistApi,
-  playlistApi, subscriptionApi, feedApi, downloadApi
-} from '../api/client'
+import { storageSettingsApi } from '../api/client'
+
+export function useStorageSettings() {
+  return useQuery({
+    queryKey: ['storageSettings'],
+    queryFn: storageSettingsApi.get,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+export function useUpdateStorageSettings() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: storageSettingsApi.update,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['storageSettings'] }),
+  })
+}
+
 
 // ─────────────────────────────────────────────
 // YouTube hooks

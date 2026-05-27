@@ -30,5 +30,7 @@ fun Application.configureRouting() {
         subscriptionRoutes() // GET/POST/DELETE /subscriptions
         feedRoutes()         // GET /feed
         downloadRoutes()     // GET/POST/DELETE /downloads
+        storageSettingsRoutes()   // GET/POST /settings/storage
+
     }
 }

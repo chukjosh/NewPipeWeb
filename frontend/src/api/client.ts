@@ -199,3 +199,11 @@ export const downloadApi = {
   /** Direct URL to download the completed file to the user's device */
   getFileUrl: (id: number) => `/api/downloads/${id}/file`,
 }
+
+export const storageSettingsApi = {
+  /** Get current storage paths */
+  get: () => api.get<{ downloadsDir: string; dataDir: string }>('/settings/storage').then(r => r.data),
+  /** Update storage paths */
+  update: (payload: { downloadsDir?: string; dataDir?: string }) =>
+    api.post('/settings/storage', payload),
+};
