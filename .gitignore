@@ -6,6 +6,13 @@
 /backend/out/
 /backend/.gradle/
 /backend/**/build/
+/backend/data/
+/backend/dist/
+/backend/.kotlin/
+/backend/.idea/
+/backend/.local/
+/backend/.cache/
+/backend/.vscode/
 
 *.class
 *.jar
