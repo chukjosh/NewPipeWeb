@@ -1,0 +1,25 @@
+version: '3.9'
+
+services:
+
+  backend:
+    build: ./backend
+    container_name: newpipeweb-backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data
+      - ./downloads:/app/downloads
+    environment:
+      - DATA_DIR=/app/data
+      - DOWNLOADS_DIR=/app/downloads
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: newpipeweb-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
