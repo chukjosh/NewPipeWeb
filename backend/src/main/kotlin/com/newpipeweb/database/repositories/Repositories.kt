@@ -158,11 +158,11 @@ object PlaylistRepository {
     }
 
     fun create(request: CreatePlaylistRequest): Int = transaction {
-        PlaylistsTable.insertAndGetId {
+        PlaylistsTable.insert {
             it[name] = request.name
             it[description] = request.description
             it[createdAt] = LocalDateTime.now()
-        }.value
+        }[PlaylistsTable.id]
     }
 
     fun delete(id: Int) = transaction {
@@ -262,7 +262,7 @@ object DownloadRepository {
         thumbnailUrl: String, filePath: String,
         quality: String, isAudioOnly: Boolean
     ): Int = transaction {
-        DownloadsTable.insertAndGetId {
+        DownloadsTable.insert {
             it[DownloadsTable.videoId] = videoId
             it[DownloadsTable.title] = title
             it[DownloadsTable.uploader] = uploader
@@ -272,7 +272,7 @@ object DownloadRepository {
             it[DownloadsTable.isAudioOnly] = isAudioOnly
             it[status] = "PENDING"
             it[createdAt] = LocalDateTime.now()
-        }.value
+        }[DownloadsTable.id]
     }
 
     fun updateProgress(id: Int, downloadedBytes: Long, fileSize: Long) = transaction {

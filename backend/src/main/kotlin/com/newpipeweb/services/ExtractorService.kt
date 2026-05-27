@@ -32,6 +32,10 @@ import org.schabi.newpipe.extractor.comments.CommentsInfo
 import org.schabi.newpipe.extractor.kiosk.KioskInfo
 import org.schabi.newpipe.extractor.search.SearchInfo
 import org.schabi.newpipe.extractor.stream.StreamInfo
+import org.schabi.newpipe.extractor.stream.StreamInfoItem
+import org.schabi.newpipe.extractor.stream.StreamType
+import org.schabi.newpipe.extractor.channel.tabs.ChannelTabs
+import org.schabi.newpipe.extractor.channel.tabs.ChannelTabInfo
 import org.schabi.newpipe.extractor.ServiceList
 
 object ExtractorService {
@@ -123,6 +127,7 @@ object ExtractorService {
         val items = searchInfo.relatedItems
             .filterNotNull()
             .mapNotNull { item ->
+                if (item !is StreamInfoItem) return@mapNotNull null
                 try {
                     VideoModel(
                         id           = extractId(item.url),
@@ -133,7 +138,7 @@ object ExtractorService {
                         viewCount    = item.viewCount,
                         uploadDate   = item.textualUploadDate ?: "",
                         thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
-                        isLive       = item.isLive,
+                        isLive       = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                         url          = item.url ?: "",
                         service      = serviceName
                     )
@@ -188,6 +193,7 @@ object ExtractorService {
             .filterNotNull()
             .take(20)
             .mapNotNull { item ->
+                if (item !is StreamInfoItem) return@mapNotNull null
                 try {
                     VideoModel(
                         id           = extractId(item.url),
@@ -198,7 +204,7 @@ object ExtractorService {
                         viewCount    = item.viewCount,
                         uploadDate   = item.textualUploadDate ?: "",
                         thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
-                        isLive       = item.isLive,
+                        isLive       = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                         url          = item.url ?: "",
                         service      = service.serviceInfo.name.lowercase()
                     )
@@ -235,10 +241,25 @@ object ExtractorService {
         val service     = serviceFromUrl(url)
         val channelInfo = ChannelInfo.getInfo(service, url)
 
-        val videos = channelInfo.relatedItems
+        val videosTab = channelInfo.tabs.firstOrNull { 
+            it.id == ChannelTabs.VIDEOS || it.id == ChannelTabs.TRACKS 
+        } ?: channelInfo.tabs.firstOrNull()
+
+        val rawVideos = if (videosTab != null) {
+            try {
+                ChannelTabInfo.getInfo(service, videosTab).relatedItems
+            } catch (e: Exception) {
+                emptyList()
+            }
+        } else {
+            emptyList()
+        }
+
+        val videos = rawVideos
             .filterNotNull()
             .take(30)
             .mapNotNull { item ->
+                if (item !is StreamInfoItem) return@mapNotNull null
                 try {
                     VideoModel(
                         id           = extractId(item.url),
@@ -249,7 +270,7 @@ object ExtractorService {
                         viewCount    = item.viewCount,
                         uploadDate   = item.textualUploadDate ?: "",
                         thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
-                        isLive       = item.isLive,
+                        isLive       = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                         url          = item.url ?: "",
                         service      = service.serviceInfo.name.lowercase()
                     )
@@ -304,6 +325,7 @@ object ExtractorService {
                 .filterNotNull()
                 .take(30)
                 .mapNotNull { item ->
+                    if (item !is StreamInfoItem) return@mapNotNull null
                     try {
                         VideoModel(
                             id           = extractId(item.url),
@@ -314,7 +336,7 @@ object ExtractorService {
                             viewCount    = item.viewCount,
                             uploadDate   = item.textualUploadDate ?: "",
                             thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
-                            isLive       = item.isLive,
+                            isLive       = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                             url          = item.url ?: "",
                             service      = serviceName
                         )

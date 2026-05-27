@@ -17,6 +17,7 @@ package com.newpipeweb.routes
 import com.newpipeweb.models.ServiceInfoModel
 import com.newpipeweb.services.ExtractorService
 import io.ktor.http.*
+import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 

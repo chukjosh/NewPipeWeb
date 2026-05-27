@@ -5,6 +5,10 @@ import org.schabi.newpipe.extractor.ServiceList.YouTube
 import org.schabi.newpipe.extractor.comments.CommentsInfo
 import org.schabi.newpipe.extractor.search.SearchInfo
 import org.schabi.newpipe.extractor.stream.StreamInfo
+import org.schabi.newpipe.extractor.stream.StreamInfoItem
+import org.schabi.newpipe.extractor.stream.StreamType
+import org.schabi.newpipe.extractor.channel.tabs.ChannelTabs
+import org.schabi.newpipe.extractor.channel.tabs.ChannelTabInfo
 import org.schabi.newpipe.extractor.stream.VideoStream
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.channel.ChannelInfo
@@ -25,6 +29,7 @@ object YouTubeService {
         val items = searchInfo.relatedItems
             .filterNotNull()
             .mapNotNull { item ->
+                if (item !is StreamInfoItem) return@mapNotNull null
                 try {
                     VideoModel(
                         id = extractVideoId(item.url),
@@ -35,7 +40,7 @@ object YouTubeService {
                         viewCount = item.viewCount,
                         uploadDate = item.textualUploadDate ?: "",
                         thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
-                        isLive = item.isLive,
+                        isLive = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                         url = item.url ?: ""
                     )
                 } catch (e: Exception) {
@@ -45,6 +50,7 @@ object YouTubeService {
 
         return SearchModel(
             query = query,
+            service = "youtube",
             items = items,
             nextPage = searchInfo.nextPage?.url
         )
@@ -68,7 +74,7 @@ object YouTubeService {
             uploadDate = streamInfo.textualUploadDate ?: "",
             thumbnailUrl = streamInfo.thumbnails.firstOrNull()?.url ?: "",
             description = streamInfo.description?.content ?: "",
-            isLive = streamInfo.isLive,
+            isLive = streamInfo.streamType == StreamType.LIVE_STREAM || streamInfo.streamType == StreamType.AUDIO_LIVE_STREAM,
             url = url
         )
     }
@@ -119,6 +125,7 @@ object YouTubeService {
             .filterNotNull()
             .take(20)
             .mapNotNull { item ->
+                if (item !is StreamInfoItem) return@mapNotNull null
                 try {
                     VideoModel(
                         id = extractVideoId(item.url),
@@ -129,7 +136,7 @@ object YouTubeService {
                         viewCount = item.viewCount,
                         uploadDate = item.textualUploadDate ?: "",
                         thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
-                        isLive = item.isLive,
+                        isLive = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                         url = item.url ?: ""
                     )
                 } catch (e: Exception) {
@@ -158,10 +165,25 @@ object YouTubeService {
         val url = "https://www.youtube.com/channel/$channelId"
         val channelInfo = ChannelInfo.getInfo(YouTube, url)
 
-        val videos = channelInfo.relatedItems
+        val videosTab = channelInfo.tabs.firstOrNull { 
+            it.id == ChannelTabs.VIDEOS || it.id == ChannelTabs.TRACKS 
+        } ?: channelInfo.tabs.firstOrNull()
+
+        val rawVideos = if (videosTab != null) {
+            try {
+                ChannelTabInfo.getInfo(YouTube, videosTab).relatedItems
+            } catch (e: Exception) {
+                emptyList()
+            }
+        } else {
+            emptyList()
+        }
+
+        val videos = rawVideos
             .filterNotNull()
             .take(30)
             .mapNotNull { item ->
+                if (item !is StreamInfoItem) return@mapNotNull null
                 try {
                     VideoModel(
                         id = extractVideoId(item.url),
@@ -172,7 +194,7 @@ object YouTubeService {
                         viewCount = item.viewCount,
                         uploadDate = item.textualUploadDate ?: "",
                         thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
-                        isLive = item.isLive,
+                        isLive = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                         url = item.url ?: ""
                     )
                 } catch (e: Exception) {
@@ -203,6 +225,7 @@ object YouTubeService {
             .filterNotNull()
             .take(30)
             .mapNotNull { item ->
+                if (item !is StreamInfoItem) return@mapNotNull null
                 try {
                     VideoModel(
                         id = extractVideoId(item.url),
@@ -213,7 +236,7 @@ object YouTubeService {
                         viewCount = item.viewCount,
                         uploadDate = item.textualUploadDate ?: "",
                         thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
-                        isLive = item.isLive,
+                        isLive = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                         url = item.url ?: ""
                     )
                 } catch (e: Exception) {
