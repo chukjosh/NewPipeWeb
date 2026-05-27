@@ -1,25 +1,103 @@
-# .gitignore for NewPipeWeb project
-# Database and downloads — these are user data, not source code
+# ========================================
+# NewPipeWeb .gitignore
+# ========================================
+
+# ========================================
+# User Data & Runtime (Not source code)
+# ========================================
 data/
 downloads/
 *.db
+*.sqlite
+*.sqlite3
 
-# Gradle
+# ========================================
+# Backend (Gradle + Kotlin + JVM)
+# ========================================
 backend/.gradle/
 backend/build/
+backend/out/
+backend/*.jar
+backend/*.war
+backend/gradlew.bat
+backend/gradlew
 
-# Node
+# ========================================
+# Frontend (Node + Vite + React)
+# ========================================
 frontend/node_modules/
 frontend/dist/
+frontend/.vite/
+frontend/.cache/
 
-# Rust/Tauri
+# ========================================
+# Desktop App (Tauri + Rust)
+# ========================================
+desktop/node_modules/
+desktop/dist/
 desktop/src-tauri/target/
+desktop/src-tauri/Cargo.lock
 
-# Environment
+# ========================================
+# Environment & Secrets
+# ========================================
 .env
+.env.local
+.env.*.local
 backend/.env
+frontend/.env
+desktop/.env
 
-# IDE
+# ========================================
+# IDE & Editor
+# ========================================
 .idea/
 *.iml
+.vscode/
+*.swp
+*.swo
+*~
 .DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+.vim/
+
+# ========================================
+# OS-specific
+# ========================================
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ========================================
+# Build & Distribution
+# ========================================
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+dist/
+build/
+out/
+
+# ========================================
+# Logs
+# ========================================
+*.log
+logs/
+*.log.*
+
+# ========================================
+# Project-specific
+# ========================================
+.gradle/
+.kotlin/
+*.class
+*.jar
+*.zip
+*.tar.gz

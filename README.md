@@ -79,6 +79,128 @@ Switch services using the dropdown in the search bar. The service selector only 
 
 ---
 
+## Dependencies
+
+### Backend (Kotlin / JVM)
+
+**Build tool & Language:**
+| Component | Version | Purpose |
+|---|---|---|
+| Kotlin | 2.0.0 | JVM language |
+| JDK | 22 | Java runtime |
+| Gradle | 8.14 | Build system |
+
+**Core libraries:**
+| Library | Version | Purpose |
+|---|---|---|
+| Ktor Server Core | 2.3.12 | HTTP server framework |
+| Ktor Server Netty | 2.3.12 | Async network engine |
+| Ktor Content Negotiation | 2.3.12 | JSON/serialization middleware |
+| Ktor CORS | 2.3.12 | Cross-origin request handling |
+| Ktor Call Logging | 2.3.12 | Request/response logging |
+| Ktor Status Pages | 2.3.12 | Error handling |
+| Ktor Client CIO | 2.3.12 | HTTP client for file streaming |
+
+**Extraction & Parsing:**
+| Library | Version | Purpose |
+|---|---|---|
+| NewPipeExtractor | 0.26.0 (JitPack) | YouTube/SoundCloud/PeerTube extractor |
+| Kotlinx Serialization | 1.6.3 | JSON serialization |
+
+**Database:**
+| Library | Version | Purpose |
+|---|---|---|
+| Exposed Core | 0.50.1 | ORM framework |
+| Exposed DAO | 0.50.1 | Data access objects |
+| Exposed JDBC | 0.50.1 | JDBC driver integration |
+| Exposed Java Time | 0.50.1 | DateTime support |
+| SQLite JDBC | 3.45.3.0 | SQLite driver |
+
+**Async & Utilities:**
+| Library | Version | Purpose |
+|---|---|---|
+| Kotlinx Coroutines | 1.8.1 | Async/await support |
+| Logback | 1.5.6 | Logging implementation |
+| dotenv-kotlin | 6.4.1 | Environment variable loading |
+
+**Testing:**
+| Library | Version | Purpose |
+|---|---|---|
+| Ktor Server Tests | 2.3.12 | Integration testing |
+| Kotlin Test | 2.0.0 | Unit testing framework |
+
+### Frontend (Node.js / TypeScript)
+
+**Build & Runtime:**
+| Tool | Version | Purpose |
+|---|---|---|
+| Node.js | 24 LTS | JavaScript runtime |
+| TypeScript | 5.4.5 | Type-safe JavaScript |
+| Vite | 5.3.1 | Dev server & build tool |
+| React Router | 6.23.1 | Client-side routing |
+
+**UI & Styling:**
+| Library | Version | Purpose |
+|---|---|---|
+| React | 18.3.1 | Component framework |
+| React DOM | 18.3.1 | React rendering engine |
+| Tailwind CSS | 3.4.4 | Utility-first CSS |
+| PostCSS | 8.4.38 | CSS preprocessor |
+| Autoprefixer | 10.4.19 | CSS vendor prefixes |
+| clsx | 2.1.1 | Conditional CSS classes |
+| Lucide React | 0.383.0 | Icon library |
+
+**State & Data:**
+| Library | Version | Purpose |
+|---|---|---|
+| TanStack Query | 5.40.0 | Server state management |
+| Zustand | 4.5.2 | Client state (preferences, UI) |
+| Axios | 1.7.2 | HTTP client |
+
+**Media:**
+| Library | Version | Purpose |
+|---|---|---|
+| React Player | 2.16.0 | Video/audio playback |
+
+**Dev Tools:**
+| Tool | Version | Purpose |
+|---|---|---|
+| Vite React Plugin | 4.3.1 | Vite React JSX support |
+| ESLint | Latest | Code linting |
+
+### Desktop (Tauri 2 / Rust)
+
+**Frontend wrapper:**
+| Component | Version | Purpose |
+|---|---|---|
+| Tauri | 2.0.0 | Desktop app framework |
+| Tauri CLI | 2.0.0 | Build & dev tool |
+| Tauri API | 2.0.0 | Rust/JavaScript bridge |
+| Tauri Shell Plugin | 2.0.0 | Shell command execution |
+
+**Serialization:**
+| Library | Version | Purpose |
+|---|---|---|
+| serde | 1.0 | Rust serialization |
+| serde_json | 1.0 | JSON support |
+
+**Rust toolchain:**
+| Tool | Version | Purpose |
+|---|---|---|
+| Rust | Latest (via rustup) | Systems language |
+| Cargo | Latest (via rustup) | Rust package manager |
+
+### DevOps & Containerization
+
+| Tool | Version | Purpose |
+|---|---|---|
+| Docker | Latest | Container runtime |
+| Docker Compose | Latest | Multi-container orchestration |
+| nginx | Latest | Reverse proxy & static server |
+| Alpine Linux | 3.x | Lightweight base image |
+
+---
+
 ## Prerequisites
 
 ### For the web app (backend + frontend)
