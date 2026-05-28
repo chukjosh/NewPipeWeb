@@ -73,6 +73,7 @@ export interface StreamModel {
   subtitles: SubtitleTrack[]
   relatedVideos: VideoModel[]
   service: string
+  thumbnailUrl: string
 }
 
 export interface SearchModel {

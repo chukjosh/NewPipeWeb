@@ -247,7 +247,8 @@ object ExtractorService {
             hlsUrl        = streamInfo.hlsUrl,
             subtitles     = subtitles,
             relatedVideos = related,
-            service       = serviceKeyFromExtractorId(service.serviceId)
+            service       = serviceKeyFromExtractorId(service.serviceId),
+            thumbnailUrl  = streamInfo.thumbnails.firstOrNull()?.url ?: ""
         )
     }
 

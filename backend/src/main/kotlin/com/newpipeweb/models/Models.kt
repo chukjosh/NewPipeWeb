@@ -67,7 +67,8 @@ data class StreamModel(
     val hlsUrl: String? = null,        // for live streams
     val subtitles: List<SubtitleTrack>,
     val relatedVideos: List<VideoModel>,
-    val service: String = "youtube"
+    val service: String = "youtube",
+    val thumbnailUrl: String = ""
 )
 
 /** A single playable stream URL with quality metadata */

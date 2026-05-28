@@ -178,7 +178,7 @@ export default function Watch() {
         videoId:      contentKey,
         title:        stream.title,
         uploader:     stream.uploader,
-        thumbnailUrl: stream.videoStreams[0]?.url ?? '',
+        thumbnailUrl: stream.thumbnailUrl,
         duration:     stream.duration,
         watchedSeconds: 0,
       })
@@ -215,7 +215,7 @@ export default function Watch() {
         videoId:       contentKey,
         title:         stream.title,
         uploader:      stream.uploader,
-        thumbnailUrl:  '',
+        thumbnailUrl:  stream.thumbnailUrl,
         duration:      stream.duration,
         watchedSeconds: currentSec,
       })
@@ -296,7 +296,7 @@ export default function Watch() {
       videoId:      stream.id,
       title:        stream.title,
       uploader:     stream.uploader,
-      thumbnailUrl: stream.videoStreams[0]?.url ?? '',
+      thumbnailUrl: stream.thumbnailUrl,
       streamUrl:    selectedStream.url,
       quality:      selectedStream.quality,
       isAudioOnly:  backgroundAudioMode,
@@ -318,7 +318,7 @@ export default function Watch() {
         videoId:      contentKey,
         title:        stream.title,
         uploader:     stream.uploader,
-        thumbnailUrl: stream.videoStreams[0]?.url ?? '',
+        thumbnailUrl: stream.thumbnailUrl,
         duration:     stream.duration,
       })
     }
@@ -628,7 +628,7 @@ export default function Watch() {
           videoId={id}
           title={stream.title}
           uploader={stream.uploader}
-          thumbnailUrl={stream.videoStreams[0]?.url ?? ''}
+          thumbnailUrl={stream.thumbnailUrl}
           duration={stream.duration}
           onClose={() => setShowPlaylistModal(false)}
         />
