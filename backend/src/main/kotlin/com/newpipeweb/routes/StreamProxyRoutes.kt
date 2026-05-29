@@ -55,12 +55,19 @@ fun Route.streamProxyRoutes() {
             val upstreamAcceptRanges = upstream.headers[HttpHeaders.AcceptRanges]
             val upstreamContentRange = upstream.headers[HttpHeaders.ContentRange]
 
+            val titleParam = call.parameters["title"]
+
             call.respond(object : OutgoingContent.WriteChannelContent() {
                 override val status: HttpStatusCode? = HttpStatusCode.fromValue(upstream.status.value)
                 override val contentType: ContentType = contentType
                 override val contentLength: Long? = upstream.contentLength()
 
                 override val headers: Headers = Headers.build {
+                    if (titleParam != null && titleParam.isNotBlank()) {
+                        val ext = contentType.contentSubtype.takeIf { it.isNotBlank() } ?: "mp4"
+                        val safeTitle = titleParam.replace(Regex("[^a-zA-Z0-9._-]"), "_").take(100)
+                        append(HttpHeaders.ContentDisposition, "inline; filename=\"$safeTitle.$ext\"")
+                    }
                     // Tell the browser the upstream supports byte-range requests
                     if (upstreamAcceptRanges != null) {
                         append(HttpHeaders.AcceptRanges, upstreamAcceptRanges)

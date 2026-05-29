@@ -9,9 +9,11 @@ export function watchPath(video: { id: string; url?: string }): string {
 }
 
 /** Route external media through our backend proxy to avoid CDN CORS blocks. */
-export function proxyMediaUrl(url: string): string {
+export function proxyMediaUrl(url: string, title?: string): string {
   if (!url || url.startsWith('/api/')) return url
-  return `/api/proxy?url=${encodeURIComponent(url)}`
+  const safeTitle = title ? title.replace(/[^a-zA-Z0-9.-]/g, '_').substring(0, 100) : ''
+  const titleParam = safeTitle ? `&title=${encodeURIComponent(safeTitle)}` : ''
+  return `/api/proxy?url=${encodeURIComponent(url)}${titleParam}`
 }
 
 export function isHlsSource(url: string, format?: string): boolean {

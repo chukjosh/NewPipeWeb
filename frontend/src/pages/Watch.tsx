@@ -102,7 +102,7 @@ export default function Watch() {
     return selectedStream?.url ?? ''
   }, [useHls, hlsSourceUrl, selectedStream?.url])
 
-  const playbackUrl = playbackSourceUrl ? proxyMediaUrl(playbackSourceUrl) : ''
+  const playbackUrl = playbackSourceUrl ? proxyMediaUrl(playbackSourceUrl, stream?.title) : ''
 
   // ─────────────────────────────────────────────────────────
   // On stream load: pick best quality stream + restore resume position
@@ -135,7 +135,7 @@ export default function Watch() {
 
     const hls = new Hls({
       xhrSetup: (xhr, url) => {
-        xhr.open('GET', proxyMediaUrl(url), true)
+        xhr.open('GET', proxyMediaUrl(url, stream?.title), true)
       },
     })
     hls.loadSource(playbackUrl)
