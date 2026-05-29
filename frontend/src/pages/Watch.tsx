@@ -23,7 +23,7 @@ import {
   useStream, useComments, useAddToHistory,
   useSubscribe, useSubscriptions, useUnsubscribe,
   useHistory, useAddToWatchlist, useWatchlist,
-  useRemoveFromWatchlist,
+  useRemoveFromWatchlist, useStartDownload
 } from '../hooks'
 import { useSponsorBlock } from '../hooks/useSponsorBlock'
 import VideoCard from '../components/video/VideoCard'
@@ -62,6 +62,7 @@ export default function Watch() {
   const removeFromWatchlist = useRemoveFromWatchlist()
   const subscribe           = useSubscribe()
   const unsubscribe         = useUnsubscribe()
+  const startDownload       = useStartDownload()
 
   // ─── Global preferences from store ────────────────────────
   const {
@@ -292,7 +293,7 @@ export default function Watch() {
   // ─────────────────────────────────────────────────────────
   const handleDownload = async () => {
     if (!selectedStream || !stream) return
-    await downloadApi.start({
+    await startDownload.mutateAsync({
       videoId:      stream.id,
       title:        stream.title,
       uploader:     stream.uploader,
