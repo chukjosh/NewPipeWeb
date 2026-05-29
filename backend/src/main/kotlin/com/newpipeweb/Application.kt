@@ -13,7 +13,7 @@ fun main() {
     // Load environment variables from .env
     dotenv()
     // Initialize NewPipeExtractor with an HTTP downloader
-    // NewPipeExtractor v0.26.x uses `init(Downloader)` to register a downloader
+    // NewPipeExtractor v0.26.2 uses `init(Downloader)` to register a downloader
     NewPipe.init(NewPipeDownloader.getInstance())
 
     // Initialize the SQLite database

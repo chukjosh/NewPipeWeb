@@ -61,8 +61,20 @@ fun Route.streamRoutes() {
     get("/stream") {
         val url = call.parameters["url"]
             ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing 'url' parameter")
-        val stream = ExtractorService.getStreams(url)
-        call.respond(stream)
+        try {
+            val stream = ExtractorService.getStreams(url)
+            call.respond(stream)
+        } catch (e: Exception) {
+            val isSoundCloud = url.contains("soundcloud", ignoreCase = true)
+            val errorMsg = when {
+                isSoundCloud && e.message?.contains("ClientId", ignoreCase = true) == true ->
+                    "SoundCloud support is temporarily unavailable. The service requires updated authentication that is not yet available in this version."
+                else -> "Failed to extract stream from $url: ${e.message ?: e.toString()}"
+            }
+            println("[ERROR] Stream extraction failed: $errorMsg")
+            e.printStackTrace()
+            throw IllegalArgumentException(errorMsg)
+        }
     }
 
     // Keep legacy route for YouTube backward compatibility
@@ -71,8 +83,15 @@ fun Route.streamRoutes() {
         val id = call.parameters["id"]
             ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing video id")
         val url = "https://www.youtube.com/watch?v=$id"
-        val stream = ExtractorService.getStreams(url)
-        call.respond(stream)
+        try {
+            val stream = ExtractorService.getStreams(url)
+            call.respond(stream)
+        } catch (e: Exception) {
+            val errorMsg = "Failed to extract stream for video $id: ${e.message ?: e.toString()}"
+            println("[ERROR] YouTube stream extraction failed: $errorMsg")
+            e.printStackTrace()
+            throw IllegalArgumentException(errorMsg)
+        }
     }
 }
 

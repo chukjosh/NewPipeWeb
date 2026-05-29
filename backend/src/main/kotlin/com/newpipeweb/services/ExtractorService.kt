@@ -46,10 +46,11 @@ object ExtractorService {
     private const val TRENDING_LIMIT = 30
 
     /**
-     * YouTube removed the combined /feed/trending page in 2025.
-     * These replacement kiosks are what NewPipeExtractor v0.26+ exposes instead.
+     * YouTube trending feeds supported by NewPipeExtractor.
+     * The main trending page is preferred, followed by category-specific kiosks.
      */
     private val YOUTUBE_TRENDING_KIOSK_URLS = listOf(
+        "https://www.youtube.com/feed/trending",
         "https://www.youtube.com/gaming/trending",
         "https://charts.youtube.com/charts/TrendingVideos/RightNow",
         "https://www.youtube.com/podcasts/popularepisodes",

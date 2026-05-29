@@ -313,7 +313,6 @@ data class StartDownloadRequest(
     val thumbnailUrl: String,
     val streamUrl: String,
     val quality: String,
-    val format: String? = null,
     val isAudioOnly: Boolean = false,
     val service: String = "youtube"
 )

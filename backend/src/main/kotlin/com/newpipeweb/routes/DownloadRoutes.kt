@@ -21,24 +21,6 @@ import io.ktor.utils.io.readAvailable
 
 private val httpClient = HttpClient(CIO)
 
-private fun isHlsManifest(url: String): Boolean =
-    url.contains(".m3u8", ignoreCase = true) ||
-    url.contains("application/vnd.apple.mpegurl", ignoreCase = true)
-
-private fun guessExtension(streamUrl: String, format: String?, isAudioOnly: Boolean): String {
-    val normalizedFormat = format?.lowercase() ?: ""
-    return when {
-        streamUrl.contains(".mp3", ignoreCase = true) || normalizedFormat.contains("mp3") -> "mp3"
-        streamUrl.contains(".m4a", ignoreCase = true) || normalizedFormat.contains("m4a") -> "m4a"
-        streamUrl.contains(".webm", ignoreCase = true) || normalizedFormat.contains("webm") -> "webm"
-        streamUrl.contains(".ogg", ignoreCase = true) || normalizedFormat.contains("ogg") -> "ogg"
-        normalizedFormat.contains("aac") -> "m4a"
-        normalizedFormat.contains("mp4") || streamUrl.contains(".mp4", ignoreCase = true) -> "mp4"
-        isAudioOnly -> "m4a"
-        else -> "mp4"
-    }
-}
-
 fun Route.downloadRoutes() {
     route("/downloads") {
 
@@ -51,15 +33,10 @@ fun Route.downloadRoutes() {
         post {
             val request = call.receive<StartDownloadRequest>()
 
-            if (isHlsManifest(request.streamUrl)) {
-                return@post call.respond(HttpStatusCode.BadRequest,
-                    "Cannot download HLS/M3U8 manifest URLs directly. Please select a direct audio or video stream.")
-            }
-
             val downloadsDir = resolveDownloadsDir()
             downloadsDir.mkdirs()
 
-            val ext = guessExtension(request.streamUrl, request.format, request.isAudioOnly)
+            val ext = if (request.isAudioOnly) "m4a" else "mp4"
             val safeTitle = request.title.replace(Regex("[^a-zA-Z0-9._-]"), "_").take(100)
             val filePath = "${downloadsDir.absolutePath}/${safeTitle}_${request.videoId}.$ext"
 

@@ -34,12 +34,41 @@ class NewPipeDownloader private constructor() : Downloader() {
             }
         }
 
-        // Set a realistic User-Agent to avoid blocks
-        connection.setRequestProperty(
-            "User-Agent",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-            "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        )
+        // Apply default headers only when NewPipeExtractor did not set them.
+        if (connection.getRequestProperty("User-Agent").isNullOrBlank()) {
+            connection.setRequestProperty(
+                "User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+                "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            )
+        }
+        if (connection.getRequestProperty("Accept").isNullOrBlank()) {
+            connection.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+        }
+        if (connection.getRequestProperty("Accept-Language").isNullOrBlank()) {
+            connection.setRequestProperty("Accept-Language", "en-US,en;q=0.9")
+        }
+        if (connection.getRequestProperty("Accept-Encoding").isNullOrBlank()) {
+            connection.setRequestProperty("Accept-Encoding", "gzip, deflate")
+        }
+        if (connection.getRequestProperty("Connection").isNullOrBlank()) {
+            connection.setRequestProperty("Connection", "keep-alive")
+        }
+        if (connection.getRequestProperty("Upgrade-Insecure-Requests").isNullOrBlank()) {
+            connection.setRequestProperty("Upgrade-Insecure-Requests", "1")
+        }
+
+        // Set referer for SoundCloud requests and related CDN/script hosts.
+        // This helps SoundCloud client-id extraction and API requests.
+        val destination = url.toString()
+        if ((destination.contains("soundcloud.com") || destination.contains("sndcdn.com")) &&
+            connection.getRequestProperty("Referer").isNullOrBlank()) {
+            connection.setRequestProperty("Referer", "https://soundcloud.com/")
+        }
+        if ((destination.contains("soundcloud.com") || destination.contains("sndcdn.com")) &&
+            connection.getRequestProperty("Origin").isNullOrBlank()) {
+            connection.setRequestProperty("Origin", "https://soundcloud.com")
+        }
 
         connection.requestMethod = request.httpMethod()
         connection.connectTimeout = 30_000
