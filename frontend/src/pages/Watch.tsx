@@ -36,8 +36,24 @@ import {
   Bell, BellOff, ListVideo, PictureInPicture2,
   Headphones, Subtitles, SkipForward, Settings,
 } from 'lucide-react'
-import type { StreamUrl, SubtitleTrack } from '../types'
+import type { StreamModel, StreamUrl, SubtitleTrack } from '../types'
 import { pickDefaultStream, proxyMediaUrl, isHlsSource } from '../utils/playback'
+
+function getDownloadStream(stream: StreamModel, selectedStream: StreamUrl): StreamUrl | null {
+  if (!isHlsSource(selectedStream.url, selectedStream.format)) {
+    return selectedStream
+  }
+
+  const candidates = [...stream.audioStreams, ...stream.videoStreams]
+  const matchingQuality = candidates.find(s =>
+    s.quality === selectedStream.quality && !isHlsSource(s.url, s.format)
+  )
+  if (matchingQuality) {
+    return matchingQuality
+  }
+
+  return candidates.find(s => !isHlsSource(s.url, s.format))
+}
 
 export default function Watch() {
   const { id } = useParams<{ id: string }>()
@@ -293,13 +309,21 @@ export default function Watch() {
   // ─────────────────────────────────────────────────────────
   const handleDownload = async () => {
     if (!selectedStream || !stream) return
+
+    const downloadStream = getDownloadStream(stream, selectedStream)
+    if (!downloadStream) {
+      alert('Download unavailable for this stream. Please choose a different quality or disable HLS/audio-only mode.')
+      return
+    }
+
     await startDownload.mutateAsync({
       videoId:      stream.id,
       title:        stream.title,
       uploader:     stream.uploader,
       thumbnailUrl: stream.thumbnailUrl,
-      streamUrl:    selectedStream.url,
-      quality:      selectedStream.quality,
+      streamUrl:    downloadStream.url,
+      quality:      downloadStream.quality,
+      format:       downloadStream.format,
       isAudioOnly:  backgroundAudioMode,
     })
     alert('Download started! Check the Downloads page.')

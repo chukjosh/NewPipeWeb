@@ -200,7 +200,7 @@ export const downloadApi = {
   start: (data: {
     videoId: string; title: string; uploader: string
     thumbnailUrl: string; streamUrl: string
-    quality: string; isAudioOnly?: boolean; service?: string
+    quality: string; format?: string; isAudioOnly?: boolean; service?: string
   }) => api.post<{ id: number }>('/downloads', data).then(r => r.data),
 
   delete: (id: number) =>
