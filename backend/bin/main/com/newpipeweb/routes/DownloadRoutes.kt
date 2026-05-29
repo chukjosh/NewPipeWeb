@@ -53,7 +53,11 @@ fun Route.downloadRoutes() {
             // Stream the download in the background
             call.application.launch(Dispatchers.IO) {
                 try {
-                    val response = httpClient.get(request.streamUrl)
+                    val response = httpClient.get(request.streamUrl) {
+                        headers {
+                            append(HttpHeaders.UserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                        }
+                    }
                     val contentLength = response.contentLength() ?: -1L
                     val outputFile = File(filePath)
                     var downloadedBytes = 0L
@@ -76,6 +80,8 @@ fun Route.downloadRoutes() {
 
                     DownloadRepository.markCompleted(downloadId, downloadedBytes)
                 } catch (e: Exception) {
+                    println("Download failed for $downloadId: ${e.message}")
+                    e.printStackTrace()
                     DownloadRepository.markFailed(downloadId)
                 }
             }
