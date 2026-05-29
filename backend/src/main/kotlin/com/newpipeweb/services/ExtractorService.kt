@@ -142,10 +142,14 @@ object ExtractorService {
     fun search(query: String, serviceName: String = "youtube"): SearchModel {
         val service = resolveService(serviceName)
 
-        val searchInfo = SearchInfo.getInfo(
-            service,
-            service.searchQHFactory.fromQuery(query)
-        )
+        val searchInfo = try {
+            SearchInfo.getInfo(
+                service,
+                service.searchQHFactory.fromQuery(query)
+            )
+        } catch (e: Exception) {
+            return SearchModel(query = query, service = serviceName, items = emptyList())
+        }
 
         val items = searchInfo.relatedItems
             .filterNotNull()
@@ -190,7 +194,11 @@ object ExtractorService {
      */
     fun getStreams(url: String): StreamModel {
         val service   = serviceFromUrl(url)
-        val streamInfo = StreamInfo.getInfo(service, url)
+        val streamInfo = try {
+            StreamInfo.getInfo(service, url)
+        } catch (e: Exception) {
+            throw IllegalArgumentException("Extraction failed for $url: ${e.message}")
+        }
 
         // Combine regular + video-only streams
         val videoStreams = streamInfo.videoStreams.map { s ->
