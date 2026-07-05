@@ -775,3 +775,9 @@ sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev
 
 **White screen in desktop window** — Make sure both the backend (`./gradlew run`)
 and the frontend dev server (`npm run dev`) are running before launching Tauri.
+
+---
+
+<div align="center">
+  <p>⭐ Star this repo if you found it helpful!</p>
+</div>
