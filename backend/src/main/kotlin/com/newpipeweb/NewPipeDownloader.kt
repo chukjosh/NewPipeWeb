@@ -87,6 +87,7 @@ class NewPipeDownloader private constructor() : Downloader() {
         } catch (e: Exception) {
             connection.errorStream?.bufferedReader()?.readText() ?: ""
         }
+        println("DEBUG Downloader: HTTP ${request.httpMethod()} $destination -> Code=$responseCode, Body Length=${responseBody.length}")
 
         val responseHeaders = mutableMapOf<String, MutableList<String>>()
         connection.headerFields.forEach { (key, values) ->
