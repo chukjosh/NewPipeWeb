@@ -3,12 +3,20 @@ package com.newpipeweb
 import org.schabi.newpipe.extractor.downloader.Downloader
 import org.schabi.newpipe.extractor.downloader.Request
 import org.schabi.newpipe.extractor.downloader.Response
+import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.zip.GZIPInputStream
+import java.util.zip.InflaterInputStream
 
 /**
  * NewPipeExtractor requires a Downloader implementation to make HTTP requests.
- * This is a simple implementation using Java's HttpURLConnection.
+ *
+ * IMPORTANT: We do NOT set Accept-Encoding manually. Java's HttpURLConnection
+ * automatically adds "Accept-Encoding: gzip" and transparently decompresses the
+ * response when it controls this header. If we set it manually, Java skips
+ * decompression and the extractor receives raw compressed binary data, causing
+ * "Couldn't extract client id" and empty trending results.
  */
 class NewPipeDownloader private constructor() : Downloader() {
 
@@ -48,9 +56,9 @@ class NewPipeDownloader private constructor() : Downloader() {
         if (connection.getRequestProperty("Accept-Language").isNullOrBlank()) {
             connection.setRequestProperty("Accept-Language", "en-US,en;q=0.9")
         }
-        if (connection.getRequestProperty("Accept-Encoding").isNullOrBlank()) {
-            connection.setRequestProperty("Accept-Encoding", "gzip, deflate")
-        }
+        // NOTE: Accept-Encoding is intentionally NOT set here.
+        // Java's HttpURLConnection handles gzip transparently when it sets this header itself.
+        // Setting it manually disables auto-decompression, breaking response parsing.
         if (connection.getRequestProperty("Connection").isNullOrBlank()) {
             connection.setRequestProperty("Connection", "keep-alive")
         }
@@ -82,12 +90,35 @@ class NewPipeDownloader private constructor() : Downloader() {
         }
 
         val responseCode = connection.responseCode
+
+        // Read response — decompress manually only if Content-Encoding header is present,
+        // which means Java did NOT auto-decompress (can happen when NewPipeExtractor sets
+        // its own Accept-Encoding header in the request).
         val responseBody = try {
-            connection.inputStream.bufferedReader().readText()
+            val contentEncoding = connection.contentEncoding
+            val rawStream: InputStream = connection.inputStream
+            val decodedStream: InputStream = when {
+                contentEncoding?.equals("gzip", ignoreCase = true) == true -> GZIPInputStream(rawStream)
+                contentEncoding?.equals("deflate", ignoreCase = true) == true -> InflaterInputStream(rawStream)
+                else -> rawStream
+            }
+            decodedStream.bufferedReader(Charsets.UTF_8).readText()
         } catch (e: Exception) {
-            connection.errorStream?.bufferedReader()?.readText() ?: ""
+            try {
+                val errorEncoding = connection.getHeaderField("Content-Encoding")
+                val errStream: InputStream = connection.errorStream ?: return Response(
+                    responseCode, connection.responseMessage, emptyMap(), "", request.url()
+                )
+                val decodedErr: InputStream = when {
+                    errorEncoding?.equals("gzip", ignoreCase = true) == true -> GZIPInputStream(errStream)
+                    errorEncoding?.equals("deflate", ignoreCase = true) == true -> InflaterInputStream(errStream)
+                    else -> errStream
+                }
+                decodedErr.bufferedReader(Charsets.UTF_8).readText()
+            } catch (e2: Exception) {
+                ""
+            }
         }
-        println("DEBUG Downloader: HTTP ${request.httpMethod()} $destination -> Code=$responseCode, Body Length=${responseBody.length}")
 
         val responseHeaders = mutableMapOf<String, MutableList<String>>()
         connection.headerFields.forEach { (key, values) ->
