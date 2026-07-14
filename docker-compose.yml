@@ -1,23 +1,69 @@
+# ======================================================
+# Docker Compose configuration for NewPipeWeb
+#
+# Services:
+#   - backend  : Ktor API
+#   - frontend : React application served by Nginx
+# ======================================================
+
 services:
 
+  # ====================================================
+  # Backend (Ktor)
+  # ====================================================
   backend:
+
+    # Build the image from the backend directory.
     build: ./backend
+
+    # Give the container a predictable name.
     container_name: newpipeweb-backend
+
+    # Expose the backend on localhost:8080.
     ports:
       - "8080:8080"
+
+    # Persist application data on the host machine.
+    #
+    # ./data       -> Database and application data
+    # ./downloads  -> Downloaded media
     volumes:
       - ./data:/app/data
       - ./downloads:/app/downloads
+
+    # Environment variables available inside the container.
     environment:
       - DATA_DIR=/app/data
       - DOWNLOADS_DIR=/app/downloads
+
+    # Automatically restart unless explicitly stopped.
     restart: unless-stopped
 
+  # ====================================================
+  # Frontend (React + Nginx)
+  # ====================================================
   frontend:
+
+    # Build the image from the frontend directory.
     build: ./frontend
+
+    # Give the container a predictable name.
     container_name: newpipeweb-frontend
+
+    # Serve the React application on localhost:3000.
+    #
+    # Host Port : Container Port
+    #     3000  :      80 (Nginx)
     ports:
       - "3000:80"
+
+    # Start the frontend after the backend container.
+    #
+    # Note:
+    # This only controls startup order. It does NOT wait
+    # for the backend to become fully ready.
     depends_on:
       - backend
+
+    # Automatically restart unless explicitly stopped.
     restart: unless-stopped

@@ -59,7 +59,7 @@ export function useChannel(id: string) {
 export function useTrending() {
   return useQuery({
     queryKey: ['trending'],
-    queryFn: extractorApi.getTrending,
+    queryFn: () => extractorApi.getTrending(),
     staleTime: 1000 * 60 * 15,
   })
 }

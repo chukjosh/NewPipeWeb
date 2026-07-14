@@ -29,12 +29,11 @@ import { useSponsorBlock } from '../hooks/useSponsorBlock'
 import VideoCard from '../components/video/VideoCard'
 import { LoadingSpinner, ErrorMessage } from '../components/common'
 import AddToPlaylistModal from '../components/playlist/AddToPlaylistModal'
-import { downloadApi } from '../api/client'
 import { useAppStore } from '../store/useAppStore'
 import {
   ThumbsUp, Download, BookmarkPlus, BookmarkCheck,
   Bell, BellOff, ListVideo, PictureInPicture2,
-  Headphones, Subtitles, SkipForward, Settings,
+  Headphones, Subtitles, SkipForward,
 } from 'lucide-react'
 import type { StreamUrl, SubtitleTrack } from '../types'
 import { pickDefaultStream, proxyMediaUrl, isHlsSource } from '../utils/playback'
@@ -57,12 +56,12 @@ export default function Watch() {
   const { data: subscriptions } = useSubscriptions()
 
   // ─── Mutations ────────────────────────────────────────────
-  const addToHistory        = useAddToHistory()
-  const addToWatchlist      = useAddToWatchlist()
+  const addToHistory = useAddToHistory()
+  const addToWatchlist = useAddToWatchlist()
   const removeFromWatchlist = useRemoveFromWatchlist()
-  const subscribe           = useSubscribe()
-  const unsubscribe         = useUnsubscribe()
-  const startDownload       = useStartDownload()
+  const subscribe = useSubscribe()
+  const unsubscribe = useUnsubscribe()
+  const startDownload = useStartDownload()
 
   // ─── Global preferences from store ────────────────────────
   const {
@@ -79,15 +78,15 @@ export default function Watch() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const trackRef = useRef<HTMLTrackElement>(null)
 
-  const [selectedStream,   setSelectedStream]   = useState<StreamUrl | null>(null)
-  const [useHls,           setUseHls]           = useState(false)
-  const [hlsSourceUrl,     setHlsSourceUrl]     = useState<string | null>(null)
+  const [selectedStream, setSelectedStream] = useState<StreamUrl | null>(null)
+  const [useHls, setUseHls] = useState(false)
+  const [hlsSourceUrl, setHlsSourceUrl] = useState<string | null>(null)
   const [selectedSubtitle, setSelectedSubtitle] = useState<SubtitleTrack | null>(null)
-  const [showComments,     setShowComments]      = useState(false)
-  const [showPlaylistModal,setShowPlaylistModal] = useState(false)
-  const [isPiP,            setIsPiP]             = useState(false)
-  const [skippedCount,     setSkippedCount]      = useState(0) // how many segments skipped this session
-  const [lastSkipLabel,    setLastSkipLabel]      = useState<string | null>(null) // toast message
+  const [showComments, setShowComments] = useState(false)
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false)
+  const [isPiP, setIsPiP] = useState(false)
+  const [skippedCount, setSkippedCount] = useState(0) // how many segments skipped this session
+  const [lastSkipLabel, setLastSkipLabel] = useState<string | null>(null) // toast message
 
   // ─── SponsorBlock ─────────────────────────────────────────
   const isYoutube = stream?.service === 'youtube'
@@ -141,7 +140,7 @@ export default function Watch() {
     hls.loadSource(playbackUrl)
     hls.attachMedia(video)
     hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.play().catch(() => {})
+      video.play().catch(() => { })
     })
 
     return () => hls.destroy()
@@ -166,7 +165,7 @@ export default function Watch() {
   // ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!videoRef.current) return
-    videoRef.current.volume       = volume
+    videoRef.current.volume = volume
     videoRef.current.playbackRate = playbackRate
   }, [playbackUrl])
 
@@ -176,11 +175,11 @@ export default function Watch() {
   useEffect(() => {
     if (stream && contentKey) {
       addToHistory.mutate({
-        videoId:      contentKey,
-        title:        stream.title,
-        uploader:     stream.uploader,
+        videoId: contentKey,
+        title: stream.title,
+        uploader: stream.uploader,
         thumbnailUrl: stream.thumbnailUrl,
-        duration:     stream.duration,
+        duration: stream.duration,
         watchedSeconds: 0,
       })
     }
@@ -213,11 +212,11 @@ export default function Watch() {
     const currentSec = Math.floor(video.currentTime)
     if (currentSec > 0 && currentSec % 5 === 0) {
       addToHistory.mutate({
-        videoId:       contentKey,
-        title:         stream.title,
-        uploader:      stream.uploader,
-        thumbnailUrl:  stream.thumbnailUrl,
-        duration:      stream.duration,
+        videoId: contentKey,
+        title: stream.title,
+        uploader: stream.uploader,
+        thumbnailUrl: stream.thumbnailUrl,
+        duration: stream.duration,
         watchedSeconds: currentSec,
       })
     }
@@ -273,9 +272,9 @@ export default function Watch() {
     if (newMode && stream.audioStreams.length > 0) {
       const bestAudio = stream.audioStreams[0]
       setSelectedStream({
-        url:         bestAudio.url,
-        quality:     bestAudio.quality,
-        format:      bestAudio.format,
+        url: bestAudio.url,
+        quality: bestAudio.quality,
+        format: bestAudio.format,
         isVideoOnly: false,
       })
       setUseHls(isHlsSource(bestAudio.url, bestAudio.format))
@@ -294,13 +293,13 @@ export default function Watch() {
   const handleDownload = async () => {
     if (!selectedStream || !stream) return
     await startDownload.mutateAsync({
-      videoId:      stream.id,
-      title:        stream.title,
-      uploader:     stream.uploader,
+      videoId: stream.id,
+      title: stream.title,
+      uploader: stream.uploader,
       thumbnailUrl: stream.thumbnailUrl,
-      streamUrl:    selectedStream.url,
-      quality:      selectedStream.quality,
-      isAudioOnly:  backgroundAudioMode,
+      streamUrl: selectedStream.url,
+      quality: selectedStream.quality,
+      isAudioOnly: backgroundAudioMode,
     })
     alert('Download started! Check the Downloads page.')
   }
@@ -316,11 +315,11 @@ export default function Watch() {
       removeFromWatchlist.mutate(watchlistEntry.id)
     } else {
       addToWatchlist.mutate({
-        videoId:      contentKey,
-        title:        stream.title,
-        uploader:     stream.uploader,
+        videoId: contentKey,
+        title: stream.title,
+        uploader: stream.uploader,
         thumbnailUrl: stream.thumbnailUrl,
-        duration:     stream.duration,
+        duration: stream.duration,
       })
     }
   }
@@ -336,10 +335,10 @@ export default function Watch() {
       unsubscribe.mutate(sub.id)
     } else {
       subscribe.mutate({
-        channelId:   contentKey,
+        channelId: contentKey,
         channelName: stream.uploader,
-        channelUrl:  stream.uploaderUrl,
-        avatarUrl:   '',
+        channelUrl: stream.uploaderUrl,
+        avatarUrl: '',
       })
     }
   }
@@ -523,7 +522,7 @@ export default function Watch() {
               >
                 {sub
                   ? <><BellOff size={14} className="inline mr-1" />Subscribed</>
-                  : <><Bell    size={14} className="inline mr-1" />Subscribe</>
+                  : <><Bell size={14} className="inline mr-1" />Subscribe</>
                 }
               </button>
 
@@ -535,7 +534,7 @@ export default function Watch() {
               >
                 {watchlistEntry
                   ? <BookmarkCheck size={14} className="inline mr-1 text-red-400" />
-                  : <BookmarkPlus  size={14} className="inline mr-1" />
+                  : <BookmarkPlus size={14} className="inline mr-1" />
                 }
                 {watchlistEntry ? 'Saved' : 'Save'}
               </button>

@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom'
+// import { useNavigate } from 'react-router-dom' // Commented out to fix TS6133
 import { Trash2, SkipForward, Info } from 'lucide-react'
 import {
   useAppStore,
@@ -40,11 +40,13 @@ const PLAYBACK_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
 const QUALITY_OPTIONS = ['2160p', '1440p', '1080p', '720p', '480p', '360p', '240p', '144p']
 
 export default function Settings() {
-  const navigate = useNavigate()
+  // const navigate = useNavigate() // Commented out to fix TS6133
   const clearHistory = useClearHistory()
 
-  // Pull storage settings (including trending country)
-  const { data: storageSettings } = useStorageSettings()
+  // Pull storage settings and explicitly cast type to resolve TS2339
+  const { data: storageSettings } = useStorageSettings() as {
+    data: { downloadsDir: string; dataDir: string; trendingCountry?: string } | undefined
+  }
   const updateSettings = useUpdateStorageSettings()
   const trendingCountry = storageSettings?.trendingCountry ?? 'US'
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

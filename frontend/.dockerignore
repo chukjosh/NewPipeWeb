@@ -1,0 +1,69 @@
+node_modules
+dist
+
+.git
+.gitignore
+
+.vscode
+.idea
+
+*.log
+
+.env
+.env.*
+!.env.example
+
+# ======================================================
+# Docker environment variables
+# These variables control Docker behavior and should NOT
+# be included in the production image.
+# ======================================================
+.env.docker
+.env.docker-compose
+
+# ======================================================
+# Editor files
+# These are IDE-specific configuration files that should
+# NOT be included in the production image.
+# ======================================================
+.vscode/
+.idea/
+
+# ======================================================
+# Version control
+# These are Git files that should NOT be included in the
+# production image.
+# ======================================================
+.git/
+.gitignore
+
+# ======================================================
+# Build artifacts
+# These are temporary files created during development.
+# ======================================================
+dist/
+node_modules/
+
+# ======================================================
+# Log files
+# These are log files that should NOT be included in the
+# production image.
+# ======================================================
+*.log
+
+# ======================================================
+# Temporary files
+# These are temporary files that should NOT be included
+# in the production image.
+# ======================================================
+*.tmp
+*.temp
+*.cache
+
+# ======================================================
+# OS files
+# These are operating system files that should NOT be
+# included in the production image.
+# ======================================================
+.DS_Store
+Thumbs.db

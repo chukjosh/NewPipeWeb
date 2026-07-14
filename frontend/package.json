@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "A full-featured, self-hosted frontend for YouTube, SoundCloud, PeerTube and more, built on top of NewPipeExtractor.",
   "private": true,
+  "packageManager": "pnpm@10.33.3",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
