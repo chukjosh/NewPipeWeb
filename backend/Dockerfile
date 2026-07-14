@@ -1,12 +1,17 @@
-# Stage 1: Build the Ktor app
-FROM gradle:8.14-jdk22 AS builder
+# Stage 1: Build
+FROM eclipse-temurin:22-jdk AS builder
 
 WORKDIR /app
+
 COPY . .
 
-RUN gradle buildFatJar --no-daemon
+# Make the wrapper executable
+RUN chmod +x gradlew
 
-# Stage 2: Run the app
+# Build using the project's Gradle Wrapper
+RUN ./gradlew buildFatJar --no-daemon
+
+# Stage 2: Runtime
 FROM eclipse-temurin:22-jre
 
 WORKDIR /app
