@@ -9,7 +9,13 @@ group = "com.newpipeweb"
 version = "1.0.0"
 
 application {
-    mainClass.set("com.newpipeweb.ApplicationKt")
+    mainClass = "com.newpipeweb.ApplicationKt"
+}
+
+ktor {
+    fatJar {
+        archiveFileName.set("app.jar")
+    }
 }
 
 repositories {

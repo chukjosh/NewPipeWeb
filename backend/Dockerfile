@@ -18,7 +18,7 @@ WORKDIR /app
 
 RUN mkdir -p /app/data /app/downloads
 
-COPY --from=builder /app/build/libs/*-all.jar app.jar
+COPY --from=builder /app/build/libs/app.jar app.jar
 
 ENV DATA_DIR=/app/data
 ENV DOWNLOADS_DIR=/app/downloads
