@@ -134,7 +134,7 @@ Switch services using the dropdown in the search bar. The service selector only 
 **Build & Runtime:**
 | Tool | Version | Purpose |
 |---|---|---|
-| Node.js | 24 LTS | JavaScript runtime |
+| Node.js | 22 LTS | JavaScript runtime |
 | TypeScript | 5.4.5 | Type-safe JavaScript |
 | Vite | 5.3.1 | Dev server & build tool |
 | React Router | 6.23.1 | Client-side routing |
@@ -206,8 +206,8 @@ Switch services using the dropdown in the search bar. The service selector only 
 ### For the web app (backend + frontend)
 | Tool | Version | Download |
 |---|---|---|
-| JDK | 21 or 25 | [adoptium.net](https://adoptium.net) |
-| Node.js | 24 LTS | [nodejs.org](https://nodejs.org) |
+| JDK | 22 | [adoptium.net](https://adoptium.net) |
+| Node.js | 22 LTS | [nodejs.org](https://nodejs.org) |
 | Git | Any | [git-scm.com](https://git-scm.com) |
 
 ### For Docker (optional but recommended)
@@ -663,7 +663,7 @@ In Docker, the frontend nginx config proxies `/api/*` to the backend.
 ## Project Structure
 
 ```
-my-newpipe-web/
+NewPipeWeb/
 │
 ├── backend/                         Kotlin + Ktor API server
 │   ├── build.gradle.kts             Dependencies (NewPipeExtractor, Exposed, etc.)
@@ -754,8 +754,8 @@ for a newer version and update `build.gradle.kts`.
 ```bash
 docker compose logs backend
 ```
-Look for the error. Common cause: JDK version mismatch in Dockerfile.
-Change `eclipse-temurin:21-jre-alpine` to `eclipse-temurin:25-jre-alpine` if needed.
+Look for the error. A common cause is a JDK version mismatch in the Dockerfile.
+Verify that the base image is set to `eclipse-temurin:22-jre-alpine`. If a different or unsupported JDK version is specified, update it to a supported version.
 
 **`bind: address already in use`**
 Change the host port in `docker-compose.yml`:
