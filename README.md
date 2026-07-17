@@ -229,7 +229,7 @@ Switch services using the dropdown in the search bar. The service selector only 
 
 ```bash
 # 1. Clone or unzip the project
-cd my-newpipe-web
+cd NewPipeWeb
 
 # 2. Start everything with Docker
 docker compose up --build
@@ -265,12 +265,14 @@ Subsequent starts are much faster.
 
 ### 2. Start the frontend
 
+> **Note:** This project uses `pnpm` to improve installation speed, reduce storage usage, and ensure consistent dependencies. But you may also use `npm` or `yarn` if you prefer.
+
 Open a new terminal:
 
 ```bash
 cd frontend
-npm install      # first run only
-npm run dev
+pnpm install      # first run only
+pnpm run dev
 ```
 
 The frontend starts on **http://localhost:5173**.
@@ -360,12 +362,12 @@ sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev \
 cd backend && ./gradlew run
 
 # In a new terminal, start the frontend dev server:
-cd frontend && npm run dev
+cd frontend && pnpm run dev
 
 # In another terminal, start the desktop app:
 cd desktop
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 A native window opens pointing at the frontend. Any changes to the frontend
@@ -375,7 +377,7 @@ hot-reload in the window automatically.
 
 ```bash
 cd desktop
-npm run build
+pnpm run build
 ```
 
 Output is in `desktop/src-tauri/target/release/bundle/`.
@@ -774,7 +776,7 @@ sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev
 ```
 
 **White screen in desktop window** — Make sure both the backend (`./gradlew run`)
-and the frontend dev server (`npm run dev`) are running before launching Tauri.
+and the frontend dev server (`pnpm run dev`) are running before launching Tauri.
 
 ---
 
