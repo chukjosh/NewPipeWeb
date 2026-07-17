@@ -265,7 +265,7 @@ Subsequent starts are much faster.
 
 ### 2. Start the frontend
 
-> **Note:** This project uses `pnpm` to improve installation speed, reduce storage usage, and ensure consistent dependencies. But you may also use `npm` or `yarn` if you prefer.
+> **Note:** This project uses `pnpm` for faster installs, lower disk usage, and consistent dependency management. You may use `npm` or `yarn` if you prefer, but `pnpm` is the recommended package manager for this project.
 
 Open a new terminal:
 
