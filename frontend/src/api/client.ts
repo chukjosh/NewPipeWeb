@@ -51,7 +51,7 @@ export const extractorApi = {
    * @param url Full content URL (YouTube, SoundCloud, etc.)
    */
   getStream: (url: string) =>
-    api.get<StreamModel>('/stream', { params: { url } }).then(r => r.data),
+    api.get<StreamModel>('/stream', { params: { url }, timeout: 120_000 }).then(r => r.data),
 
   /**
    * Get stream URLs for a YouTube video by ID (legacy shorthand).

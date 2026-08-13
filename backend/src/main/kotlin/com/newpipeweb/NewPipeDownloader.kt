@@ -79,8 +79,9 @@ class NewPipeDownloader private constructor() : Downloader() {
         }
 
         connection.requestMethod = request.httpMethod()
-        connection.connectTimeout = 30_000
-        connection.readTimeout = 30_000
+        // SoundCloud client-id extraction can require several sequential requests.
+        connection.connectTimeout = 60_000
+        connection.readTimeout = 60_000
         connection.doInput = true
 
         // Handle POST body if present

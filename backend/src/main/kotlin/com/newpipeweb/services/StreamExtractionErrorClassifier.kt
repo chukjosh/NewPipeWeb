@@ -11,8 +11,15 @@ object StreamExtractionErrorClassifier {
                 message.contains("protected", ignoreCase = true) ||
                 message.contains("403", ignoreCase = true) ||
                 message.contains("429", ignoreCase = true) ||
-                message.contains("unavailable", ignoreCase = true))) {
-            return "This SoundCloud track is unavailable, protected, or requires SoundCloud Go+/premium access."
+                message.contains("unavailable", ignoreCase = true) ||
+                message.contains("timed out", ignoreCase = true) ||
+                message.contains("timeout", ignoreCase = true))) {
+            return if (message.contains("timed out", ignoreCase = true) ||
+                message.contains("timeout", ignoreCase = true)) {
+                "SoundCloud is responding slowly or could not be reached. Try again in a moment."
+            } else {
+                "This SoundCloud track is unavailable, protected, or requires SoundCloud Go+/premium access."
+            }
         }
 
         return if (message.isBlank()) {

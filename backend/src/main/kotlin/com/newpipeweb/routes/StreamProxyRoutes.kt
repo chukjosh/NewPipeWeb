@@ -15,6 +15,9 @@ import java.net.URI
 
 private val proxyClient = HttpClient(CIO) {
     expectSuccess = false
+    engine {
+        requestTimeout = 60_000
+    }
 }
 
 private const val PROXY_USER_AGENT =
@@ -39,70 +42,68 @@ fun Route.streamProxyRoutes() {
 
         val rangeHeader = call.request.headers[HttpHeaders.Range]
 
-        proxyClient.prepareGet(rawUrl) {
-            headers {
-                append(HttpHeaders.UserAgent, PROXY_USER_AGENT)
-                rangeHeader?.let { append(HttpHeaders.Range, it) }
-                
-                // Forward client headers to upstream server (needed for SoundCloud auth, CORS, etc.)
-                call.request.headers["Referer"]?.let { append("Referer", it) }
-                call.request.headers["Origin"]?.let { append("Origin", it) }
-                call.request.headers[HttpHeaders.Accept]?.let { append(HttpHeaders.Accept, it) }
-                call.request.headers[HttpHeaders.Cookie]?.let { append(HttpHeaders.Cookie, it) }
-                
-                // SoundCloud-specific headers for authentication
-                append("Referer", "https://soundcloud.com/")
-                append("Origin", "https://soundcloud.com")
+        try {
+            proxyClient.prepareGet(rawUrl) {
+                headers {
+                    append(HttpHeaders.UserAgent, PROXY_USER_AGENT)
+                    rangeHeader?.let { append(HttpHeaders.Range, it) }
+
+                    call.request.headers["Referer"]?.let { append("Referer", it) }
+                    call.request.headers["Origin"]?.let { append("Origin", it) }
+                    call.request.headers[HttpHeaders.Accept]?.let { append(HttpHeaders.Accept, it) }
+                    call.request.headers[HttpHeaders.Cookie]?.let { append(HttpHeaders.Cookie, it) }
+
+                    append("Referer", "https://soundcloud.com/")
+                    append("Origin", "https://soundcloud.com")
+                }
+            }.execute { upstream ->
+                val contentType = upstream.headers[HttpHeaders.ContentType]
+                    ?.let { runCatching { ContentType.parse(it) }.getOrNull() }
+                    ?: ContentType.Application.OctetStream
+
+                val upstreamAcceptRanges = upstream.headers[HttpHeaders.AcceptRanges]
+                val upstreamContentRange = upstream.headers[HttpHeaders.ContentRange]
+                val titleParam = call.parameters["title"]
+
+                call.respond(object : OutgoingContent.WriteChannelContent() {
+                    override val status: HttpStatusCode? = upstream.status
+                    override val contentType: ContentType = contentType
+                    override val contentLength: Long? = upstream.contentLength()
+
+                    override val headers: Headers = Headers.build {
+                        if (titleParam != null && titleParam.isNotBlank()) {
+                            val ext = contentType.contentSubtype.takeIf { it.isNotBlank() } ?: "mp4"
+                            val safeTitle = titleParam.replace(Regex("[^a-zA-Z0-9._-]"), "_").take(100)
+                            append(HttpHeaders.ContentDisposition, "inline; filename=\"$safeTitle.$ext\"")
+                        }
+                        if (upstreamAcceptRanges != null) {
+                            append(HttpHeaders.AcceptRanges, upstreamAcceptRanges)
+                        } else {
+                            append(HttpHeaders.AcceptRanges, "bytes")
+                        }
+                        if (upstreamContentRange != null) {
+                            append(HttpHeaders.ContentRange, upstreamContentRange)
+                        }
+                    }
+
+                    override suspend fun writeTo(channel: ByteWriteChannel) {
+                        val body = upstream.bodyAsChannel()
+                        val buffer = ByteArray(8192)
+                        while (!body.isClosedForRead) {
+                            val read = body.readAvailable(buffer, 0, buffer.size)
+                            if (read <= 0) break
+                            channel.writeFully(buffer, 0, read)
+                            channel.flush()
+                        }
+                    }
+                })
             }
-        }.execute { upstream ->
-            val contentType = upstream.headers[HttpHeaders.ContentType]
-                ?.let { ContentType.parse(it) }
-                ?: ContentType.Application.OctetStream
-
-            // Forward headers critical for HTML5 <video> playback.
-            // Without Accept-Ranges and Content-Range the browser cannot
-            // determine duration, seek, or sometimes even start playing.
-            val upstreamAcceptRanges = upstream.headers[HttpHeaders.AcceptRanges]
-            val upstreamContentRange = upstream.headers[HttpHeaders.ContentRange]
-
-            val titleParam = call.parameters["title"]
-
-            call.respond(object : OutgoingContent.WriteChannelContent() {
-                override val status: HttpStatusCode? = HttpStatusCode.fromValue(upstream.status.value)
-                override val contentType: ContentType = contentType
-                override val contentLength: Long? = upstream.contentLength()
-
-                override val headers: Headers = Headers.build {
-                    if (titleParam != null && titleParam.isNotBlank()) {
-                        val ext = contentType.contentSubtype.takeIf { it.isNotBlank() } ?: "mp4"
-                        val safeTitle = titleParam.replace(Regex("[^a-zA-Z0-9._-]"), "_").take(100)
-                        append(HttpHeaders.ContentDisposition, "inline; filename=\"$safeTitle.$ext\"")
-                    }
-                    // Tell the browser the upstream supports byte-range requests
-                    if (upstreamAcceptRanges != null) {
-                        append(HttpHeaders.AcceptRanges, upstreamAcceptRanges)
-                    } else {
-                        // Most media CDNs support ranges; advertise it even if
-                        // the upstream omitted the header on a full 200 response.
-                        append(HttpHeaders.AcceptRanges, "bytes")
-                    }
-                    // Forward the Content-Range for 206 Partial Content responses
-                    if (upstreamContentRange != null) {
-                        append(HttpHeaders.ContentRange, upstreamContentRange)
-                    }
-                }
-
-                override suspend fun writeTo(channel: ByteWriteChannel) {
-                    val body = upstream.bodyAsChannel()
-                    val buffer = ByteArray(8192)
-                    while (!body.isClosedForRead) {
-                        val read = body.readAvailable(buffer, 0, buffer.size)
-                        if (read <= 0) break
-                        channel.writeFully(buffer, 0, read)
-                        channel.flush()
-                    }
-                }
-            })
+        } catch (e: Exception) {
+            println("[ERROR] Proxy failed for $rawUrl: ${e.message}")
+            call.respond(
+                HttpStatusCode.BadGateway,
+                "Failed to fetch upstream resource: ${e.message ?: "unknown error"}"
+            )
         }
     }
 }

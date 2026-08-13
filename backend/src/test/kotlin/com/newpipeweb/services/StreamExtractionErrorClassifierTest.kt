@@ -18,6 +18,19 @@ class StreamExtractionErrorClassifierTest {
     }
 
     @Test
+    fun `soundcloud timeout becomes a retry-friendly message`() {
+        val message = StreamExtractionErrorClassifier.describe(
+            "https://soundcloud.com/hypernoiz/letmedown",
+            IllegalArgumentException("Connection timed out: getsockopt")
+        )
+
+        assertEquals(
+            "SoundCloud is responding slowly or could not be reached. Try again in a moment.",
+            message
+        )
+    }
+
+    @Test
     fun `generic extraction failures stay informative without changing other services`() {
         val message = StreamExtractionErrorClassifier.describe(
             "https://www.youtube.com/watch?v=dQw4w9WgXcQ",

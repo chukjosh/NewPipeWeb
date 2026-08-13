@@ -8,7 +8,15 @@ export function watchPath(video: { id: string; url?: string }): string {
   return `/watch/${video.id}`
 }
 
-/** Route external media through our backend proxy to avoid CDN CORS blocks. */
+/**
+ * Thumbnails load fine cross-origin in <img> tags — no proxy needed.
+ * Proxying every card thumbnail was overloading /api/proxy and causing 500s.
+ */
+export function thumbnailUrl(url: string): string {
+  return url || ''
+}
+
+/** Route playable media through our backend proxy to avoid CDN CORS blocks. */
 export function proxyMediaUrl(url: string, title?: string): string {
   if (!url || url.startsWith('/api/')) return url
   const safeTitle = title ? title.replace(/[^a-zA-Z0-9.-]/g, '_').substring(0, 100) : ''
