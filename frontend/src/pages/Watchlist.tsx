@@ -1,7 +1,7 @@
 import { useWatchlist, useRemoveFromWatchlist } from '../hooks'
 import { LoadingSpinner, EmptyState } from '../components/common'
 import { useNavigate } from 'react-router-dom'
-import { watchPath } from '../utils/playback'
+import { watchPath, proxyMediaUrl } from '../utils/playback'
 import { Trash2 } from 'lucide-react'
 
 export default function Watchlist() {
@@ -22,7 +22,7 @@ export default function Watchlist() {
         {data.map((item) => (
           <div key={item.id} className="flex items-center gap-3 p-3 bg-neutral-900 rounded-xl hover:bg-neutral-800 transition-colors">
             <img
-              src={item.thumbnailUrl} alt={item.title}
+              src={proxyMediaUrl(item.thumbnailUrl, item.title)} alt={item.title}
               className="w-28 aspect-video object-cover rounded-lg bg-neutral-800 shrink-0 cursor-pointer"
               onClick={() => navigate(watchPath({ id: item.videoId, url: item.url }))}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}

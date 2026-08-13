@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { usePlaylists, useCreatePlaylist, useDeletePlaylist } from '../hooks'
 import { LoadingSpinner, EmptyState } from '../components/common'
+import { proxyMediaUrl } from '../utils/playback'
 import { Plus, Trash2, ListVideo } from 'lucide-react'
 
 export default function Library() {
@@ -54,7 +55,7 @@ export default function Library() {
                 onClick={() => navigate(`/playlist/${playlist.id}`)}
               >
                 {playlist.thumbnailUrl
-                  ? <img src={playlist.thumbnailUrl} alt={playlist.name} className="w-full h-full object-cover" />
+                  ? <img src={proxyMediaUrl(playlist.thumbnailUrl, playlist.name)} alt={playlist.name} className="w-full h-full object-cover" />
                   : <ListVideo size={40} className="text-neutral-600" />
                 }
                 <div className="absolute bottom-2 right-2 bg-black/80 text-xs px-1.5 py-0.5 rounded">

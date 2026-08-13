@@ -38,7 +38,7 @@ object YouTubeService {
                         duration = item.duration,
                         viewCount = item.viewCount,
                         uploadDate = item.textualUploadDate ?: "",
-                        thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
+                        thumbnailUrl = item.thumbnails.lastOrNull()?.url ?: "",
                         isLive = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                         url = item.url ?: ""
                     )
@@ -71,7 +71,7 @@ object YouTubeService {
             duration = streamInfo.duration,
             viewCount = streamInfo.viewCount,
             uploadDate = streamInfo.textualUploadDate ?: "",
-            thumbnailUrl = streamInfo.thumbnails.firstOrNull()?.url ?: "",
+            thumbnailUrl = streamInfo.thumbnails.lastOrNull()?.url ?: "",
             description = streamInfo.description?.content ?: "",
             isLive = streamInfo.streamType == StreamType.LIVE_STREAM || streamInfo.streamType == StreamType.AUDIO_LIVE_STREAM,
             url = url
@@ -135,7 +135,7 @@ object YouTubeService {
                         duration = item.duration,
                         viewCount = item.viewCount,
                         uploadDate = item.textualUploadDate ?: "",
-                        thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
+                        thumbnailUrl = item.thumbnails.lastOrNull()?.url ?: "",
                         isLive = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                         url = item.url ?: ""
                     )
@@ -193,7 +193,7 @@ object YouTubeService {
                         duration = item.duration,
                         viewCount = item.viewCount,
                         uploadDate = item.textualUploadDate ?: "",
-                        thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
+                        thumbnailUrl = item.thumbnails.lastOrNull()?.url ?: "",
                         isLive = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                         url = item.url ?: ""
                     )

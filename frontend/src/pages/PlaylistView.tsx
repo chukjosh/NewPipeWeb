@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { usePlaylist } from '../hooks'
 import { LoadingSpinner, ErrorMessage, EmptyState } from '../components/common'
+import { proxyMediaUrl } from '../utils/playback'
 import { Play } from 'lucide-react'
 
 export default function PlaylistView() {
@@ -26,7 +27,7 @@ export default function PlaylistView() {
           >
             <span className="text-neutral-500 text-sm w-6 text-center shrink-0">{index + 1}</span>
             <img
-              src={item.thumbnailUrl} alt={item.title}
+              src={proxyMediaUrl(item.thumbnailUrl, item.title)} alt={item.title}
               className="w-24 aspect-video object-cover rounded-lg bg-neutral-800 shrink-0"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
             />

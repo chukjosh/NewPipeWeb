@@ -11,7 +11,7 @@
 
 import { useNavigate } from 'react-router-dom'
 import { ServiceBadge } from '../common'
-import { watchPath } from '../../utils/playback'
+import { watchPath, proxyMediaUrl } from '../../utils/playback'
 import type { VideoModel } from '../../types'
 
 /** Format seconds as M:SS or H:MM:SS */
@@ -51,7 +51,7 @@ export default function VideoCard({ video }: VideoCardProps) {
       {/* Thumbnail */}
       <div className="relative aspect-video bg-neutral-800">
         <img
-          src={video.thumbnailUrl}
+          src={proxyMediaUrl(video.thumbnailUrl, video.title)}
           alt={video.title}
           className="w-full h-full object-cover"
           loading="lazy"

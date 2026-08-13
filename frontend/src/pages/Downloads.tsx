@@ -1,6 +1,7 @@
 import { useDownloads, useDeleteDownload } from '../hooks'
 import { LoadingSpinner, EmptyState } from '../components/common'
 import { downloadApi } from '../api/client'
+import { proxyMediaUrl } from '../utils/playback'
 import { Trash2, Download, CheckCircle, XCircle, Loader } from 'lucide-react'
 import type { DownloadStatus } from '../types'
 
@@ -40,7 +41,7 @@ export default function Downloads() {
         {data.map((dl) => (
           <div key={dl.id} className="flex items-center gap-4 p-4 bg-neutral-900 rounded-xl">
             <img
-              src={dl.thumbnailUrl} alt={dl.title}
+              src={proxyMediaUrl(dl.thumbnailUrl, dl.title)} alt={dl.title}
               className="w-24 aspect-video object-cover rounded-lg bg-neutral-800 shrink-0"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
             />

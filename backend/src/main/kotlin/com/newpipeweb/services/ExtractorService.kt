@@ -236,7 +236,7 @@ object ExtractorService {
                         duration     = item.duration,
                         viewCount    = item.viewCount,
                         uploadDate   = item.textualUploadDate ?: "",
-                        thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
+                        thumbnailUrl = item.thumbnails.lastOrNull()?.url ?: "",
                         isLive       = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                         url          = item.url ?: "",
                         service      = serviceKeyFromExtractorId(service.serviceId)
@@ -258,7 +258,7 @@ object ExtractorService {
             subtitles     = subtitles,
             relatedVideos = related,
             service       = serviceKeyFromExtractorId(service.serviceId),
-            thumbnailUrl  = streamInfo.thumbnails.firstOrNull()?.url ?: ""
+            thumbnailUrl  = streamInfo.thumbnails.lastOrNull()?.url ?: ""
         )
     }
 
