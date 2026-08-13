@@ -137,7 +137,7 @@ Switch services using the dropdown in the search bar. The service selector only 
 | Node.js | 22 LTS | JavaScript runtime |
 | TypeScript | 5.4.5 | Type-safe JavaScript |
 | Vite | 5.3.1 | Dev server & build tool |
-| React Router | 6.23.1 | Client-side routing |
+| React Router | 6.30.3 | Client-side routing |
 
 **UI & Styling:**
 | Library | Version | Purpose |
@@ -155,7 +155,7 @@ Switch services using the dropdown in the search bar. The service selector only 
 |---|---|---|
 | TanStack Query | 5.40.0 | Server state management |
 | Zustand | 4.5.2 | Client state (preferences, UI) |
-| Axios | 1.7.2 | HTTP client |
+| Axios | 1.16.1 | HTTP client |
 
 **Media:**
 | Library | Version | Purpose |
