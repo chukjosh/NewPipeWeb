@@ -7,6 +7,7 @@
  * - Theme class on the root div (dark/light)
  */
 
+import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useAppStore } from './store/useAppStore'
 import Navbar        from './components/layout/Navbar'
@@ -28,22 +29,23 @@ import Settings      from './pages/Settings'
 
 export default function App() {
   const theme = useAppStore(s => s.theme)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
     // Apply theme class to root — Tailwind dark mode uses this
     <div className={theme}>
       <BrowserRouter>
-        <div className="flex flex-col h-screen bg-neutral-950 text-white">
+        <div className="flex flex-col h-screen bg-neutral-950 text-white overflow-hidden">
 
           {/* Top navigation bar */}
-          <Navbar />
+          <Navbar onToggleSidebar={() => setSidebarOpen(open => !open)} />
 
           <div className="flex flex-1 overflow-hidden">
             {/* Left sidebar */}
-            <Sidebar />
+            <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             {/* Main scrollable content area */}
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
               <Routes>
                 <Route path="/"               element={<Home />}          />
                 <Route path="/watch"          element={<Watch />}         />

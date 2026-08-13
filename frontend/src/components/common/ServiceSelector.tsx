@@ -27,11 +27,12 @@ const SERVICE_ICONS: Record<string, string> = {
 interface ServiceSelectorProps {
   value: string
   onChange: (serviceId: string) => void
+  className?: string
   /** Only show services that support a given feature */
   filter?: (service: ServiceInfo) => boolean
 }
 
-export default function ServiceSelector({ value, onChange, filter }: ServiceSelectorProps) {
+export default function ServiceSelector({ value, onChange, filter, className }: ServiceSelectorProps) {
   // Fetch supported services from backend
   const { data: services } = useQuery({
     queryKey: ['services'],
@@ -48,10 +49,13 @@ export default function ServiceSelector({ value, onChange, filter }: ServiceSele
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="appearance-none bg-neutral-800 border border-neutral-700
-                   rounded-lg pl-8 pr-3 py-2 text-sm text-white
-                   outline-none focus:border-red-500 cursor-pointer
-                   transition-colors hover:bg-neutral-700"
+        className={[
+          'appearance-none bg-neutral-800 border border-neutral-700',
+          'rounded-lg pl-8 pr-3 py-2 text-sm text-white',
+          'outline-none focus:border-red-500 cursor-pointer',
+          'transition-colors hover:bg-neutral-700 w-full min-w-0',
+          className ?? '',
+        ].join(' ')}
         aria-label="Select streaming service"
       >
         {filtered.map(service => (
