@@ -165,7 +165,7 @@ object ExtractorService {
                         duration     = item.duration,
                         viewCount    = item.viewCount,
                         uploadDate   = item.textualUploadDate ?: "",
-                        thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
+                        thumbnailUrl = item.thumbnails.lastOrNull()?.url ?: "",
                         isLive       = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                         url          = item.url ?: "",
                         service      = serviceName
@@ -303,7 +303,7 @@ object ExtractorService {
                         duration     = item.duration,
                         viewCount    = item.viewCount,
                         uploadDate   = item.textualUploadDate ?: "",
-                        thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
+                        thumbnailUrl = item.thumbnails.lastOrNull()?.url ?: "",
                         isLive       = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                         url          = item.url ?: "",
                         service      = service.serviceInfo.name.lowercase()
@@ -443,7 +443,7 @@ object ExtractorService {
                         duration     = item.duration,
                         viewCount    = item.viewCount,
                         uploadDate   = item.textualUploadDate ?: "",
-                        thumbnailUrl = item.thumbnails.firstOrNull()?.url ?: "",
+                        thumbnailUrl = item.thumbnails.lastOrNull()?.url ?: "",
                         isLive       = item.streamType == StreamType.LIVE_STREAM || item.streamType == StreamType.AUDIO_LIVE_STREAM,
                         url          = item.url ?: "",
                         service      = serviceName

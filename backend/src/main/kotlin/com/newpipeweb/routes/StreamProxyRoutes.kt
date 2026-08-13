@@ -43,6 +43,16 @@ fun Route.streamProxyRoutes() {
             headers {
                 append(HttpHeaders.UserAgent, PROXY_USER_AGENT)
                 rangeHeader?.let { append(HttpHeaders.Range, it) }
+                
+                // Forward client headers to upstream server (needed for SoundCloud auth, CORS, etc.)
+                call.request.headers["Referer"]?.let { append("Referer", it) }
+                call.request.headers["Origin"]?.let { append("Origin", it) }
+                call.request.headers[HttpHeaders.Accept]?.let { append(HttpHeaders.Accept, it) }
+                call.request.headers[HttpHeaders.Cookie]?.let { append(HttpHeaders.Cookie, it) }
+                
+                // SoundCloud-specific headers for authentication
+                append("Referer", "https://soundcloud.com/")
+                append("Origin", "https://soundcloud.com")
             }
         }.execute { upstream ->
             val contentType = upstream.headers[HttpHeaders.ContentType]
