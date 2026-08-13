@@ -104,7 +104,7 @@ Switch services using the dropdown in the search bar. The service selector only 
 **Extraction & Parsing:**
 | Library | Version | Purpose |
 |---|---|---|
-| NewPipeExtractor | 0.26.0 (JitPack) | YouTube/SoundCloud/PeerTube extractor |
+| NewPipeExtractor | 0.26.4 (JitPack) | YouTube/SoundCloud/PeerTube extractor |
 | Kotlinx Serialization | 1.6.3 | JSON serialization |
 
 **Database:**

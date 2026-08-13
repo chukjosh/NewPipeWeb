@@ -82,6 +82,7 @@ object YouTubeService {
     // STREAM URLs (actual playable links)
     // ─────────────────────────────────────────
 
+    @Suppress("DEPRECATION")
     fun getStreams(videoId: String): StreamModel {
         val url = "https://www.youtube.com/watch?v=$videoId"
         val streamInfo = StreamInfo.getInfo(YouTube, url)

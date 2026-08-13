@@ -193,6 +193,7 @@ object ExtractorService {
      *
      * @param url Full content URL (e.g. YouTube watch URL, SoundCloud track URL)
      */
+    @Suppress("DEPRECATION")
     fun getStreams(url: String): StreamModel {
         val service   = serviceFromUrl(url)
         val streamInfo = try {

@@ -45,7 +45,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     // NewPipeExtractor — the core library
-    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.3")
+    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.4")
 
     // Database — Exposed ORM + SQLite
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
