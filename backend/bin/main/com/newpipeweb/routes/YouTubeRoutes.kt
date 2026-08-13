@@ -16,6 +16,7 @@ package com.newpipeweb.routes
 
 import com.newpipeweb.models.ServiceInfoModel
 import com.newpipeweb.services.ExtractorService
+import com.newpipeweb.services.StreamExtractionErrorClassifier
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -65,12 +66,7 @@ fun Route.streamRoutes() {
             val stream = ExtractorService.getStreams(url)
             call.respond(stream)
         } catch (e: Exception) {
-            val isSoundCloud = url.contains("soundcloud", ignoreCase = true)
-            val errorMsg = when {
-                isSoundCloud && e.message?.contains("ClientId", ignoreCase = true) == true ->
-                    "SoundCloud support is temporarily unavailable. The service requires updated authentication that is not yet available in this version."
-                else -> "Failed to extract stream from $url: ${e.message ?: e.toString()}"
-            }
+            val errorMsg = StreamExtractionErrorClassifier.describe(url, e)
             println("[ERROR] Stream extraction failed: $errorMsg")
             e.printStackTrace()
             throw IllegalArgumentException(errorMsg)
@@ -87,7 +83,7 @@ fun Route.streamRoutes() {
             val stream = ExtractorService.getStreams(url)
             call.respond(stream)
         } catch (e: Exception) {
-            val errorMsg = "Failed to extract stream for video $id: ${e.message ?: e.toString()}"
+            val errorMsg = StreamExtractionErrorClassifier.describe(url, e)
             println("[ERROR] YouTube stream extraction failed: $errorMsg")
             e.printStackTrace()
             throw IllegalArgumentException(errorMsg)
