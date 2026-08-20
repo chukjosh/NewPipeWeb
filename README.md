@@ -1,3 +1,5 @@
+
+
 # NewPipeWeb
 
 A full-featured, self-hosted frontend for YouTube, SoundCloud, PeerTube and more, built on top of [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor).
@@ -57,7 +59,7 @@ No Google account required. No ads. No tracking.
 | SoundCloud | ✅ | ✅ | ✅ | ✅ | ❌ |
 | PeerTube | ✅ | ✅ | ✅ | ✅ | ❌ |
 | Bandcamp | ✅ | ✅ | ✅ | ❌ | ❌ |
-| media.ccc.de | ✅ | ✅ | ✅ | ✅ | ❌ |
+| media.ccc.de | ✅ | ✅ | ✅ | ❌ | ❌ |
 | Odysee | ✅ | ✅ | ✅ | ❌ | ❌ |
 
 Switch services using the dropdown in the search bar. The service selector only shows services relevant to the current context (e.g. the trending tab only shows services with a trending feed).
@@ -161,6 +163,7 @@ Switch services using the dropdown in the search bar. The service selector only 
 | Library | Version | Purpose |
 |---|---|---|
 | React Player | 2.16.0 | Video/audio playback |
+| hls.js | 1.6.16 | HLS playback |
 
 **Dev Tools:**
 | Tool | Version | Purpose |
