@@ -19,8 +19,6 @@ backend/build/
 backend/out/
 backend/*.jar
 backend/*.war
-backend/gradlew.bat
-backend/gradlew
 
 # ========================================
 # Frontend (Node + Vite + React)
@@ -99,6 +97,8 @@ logs/
 .kotlin/
 *.class
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
+!backend/gradle/wrapper/gradle-wrapper.jar
 *.zip
 *.tar.gz
 # ========================================
