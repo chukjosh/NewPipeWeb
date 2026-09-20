@@ -1,16 +1,16 @@
-import { useDownloads, useDeleteDownload } from '../hooks'
+import { useDownloads, useDeleteDownload, useRetryDownload } from '../hooks'
 import { LoadingSpinner, EmptyState } from '../components/common'
 import { downloadApi } from '../api/client'
 import { thumbnailUrl } from '../utils/playback'
-import { Trash2, Download, CheckCircle, XCircle, Loader } from 'lucide-react'
+import { Trash2, Download, CheckCircle, XCircle, Loader, RotateCw } from 'lucide-react'
 import type { DownloadStatus } from '../types'
 
 function StatusIcon({ status }: { status: DownloadStatus }) {
   switch (status) {
-    case 'COMPLETED':  return <CheckCircle size={16} className="text-green-500" />
-    case 'FAILED':     return <XCircle size={16} className="text-red-500" />
-    case 'DOWNLOADING':return <Loader size={16} className="text-blue-400 animate-spin" />
-    default:           return <Loader size={16} className="text-neutral-400" />
+    case 'COMPLETED': return <CheckCircle size={16} className="text-green-500" />
+    case 'FAILED': return <XCircle size={16} className="text-red-500" />
+    case 'DOWNLOADING': return <Loader size={16} className="text-blue-400 animate-spin" />
+    default: return <Loader size={16} className="text-neutral-400" />
   }
 }
 
@@ -27,6 +27,7 @@ function ProgressBar({ downloaded, total }: { downloaded: number; total: number 
 export default function Downloads() {
   const { data, isLoading } = useDownloads()
   const remove = useDeleteDownload()
+  const retry = useRetryDownload()
 
   if (isLoading) return <LoadingSpinner />
   if (!data?.length) return (
@@ -70,7 +71,24 @@ export default function Downloads() {
                   <Download size={16} />
                 </a>
               )}
-              <button onClick={() => remove.mutate(dl.id)}
+              {dl.status === 'FAILED' && (
+                <button
+                  id={`retry-download-${dl.id}`}
+                  onClick={() => retry.mutate(dl.id)}
+                  disabled={!dl.streamUrl || retry.isPending}
+                  title={dl.streamUrl ? 'Retry download' : 'No stream URL stored, restart from the watch page'}
+                  className="p-2 hover:bg-neutral-700 rounded-lg transition-colors
+                    disabled:opacity-40 disabled:cursor-not-allowed
+                    text-amber-400 hover:text-amber-300 disabled:text-neutral-500"
+                >
+                  {retry.isPending
+                    ? <Loader size={16} className="animate-spin" />
+                    : <RotateCw size={16} />}
+                </button>
+              )}
+              <button
+                id={`delete-download-${dl.id}`}
+                onClick={() => remove.mutate(dl.id)}
                 className="p-2 hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-white transition-colors">
                 <Trash2 size={16} />
               </button>

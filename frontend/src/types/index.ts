@@ -221,4 +221,5 @@ export interface DownloadModel {
   isAudioOnly: boolean
   createdAt: string
   service: string
+  streamUrl?: string | null  // stored for retry; null on legacy records
 }

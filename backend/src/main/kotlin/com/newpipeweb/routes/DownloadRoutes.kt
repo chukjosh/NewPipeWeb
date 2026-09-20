@@ -19,7 +19,12 @@ import io.ktor.utils.io.readAvailable
 
 
 
-private val httpClient = HttpClient(CIO)
+private val httpClient = HttpClient(CIO) {
+    expectSuccess = false
+    engine {
+        requestTimeout = 0
+    }
+}
 
 fun Route.downloadRoutes() {
     route("/downloads") {
@@ -38,7 +43,8 @@ fun Route.downloadRoutes() {
 
             val ext = if (request.isAudioOnly) "m4a" else "mp4"
             val safeTitle = request.title.replace(Regex("[^a-zA-Z0-9._-]"), "_").take(100)
-            val filePath = "${downloadsDir.absolutePath}/${safeTitle}_${request.videoId}.$ext"
+            val safeVideoId = request.videoId.replace(Regex("[^a-zA-Z0-9._-]"), "_").take(50)
+            val filePath = "${downloadsDir.absolutePath}/${safeTitle}_${safeVideoId}.$ext"
 
             val downloadId = DownloadRepository.create(
                 videoId = request.videoId,
@@ -47,7 +53,8 @@ fun Route.downloadRoutes() {
                 thumbnailUrl = request.thumbnailUrl,
                 filePath = filePath,
                 quality = request.quality,
-                isAudioOnly = request.isAudioOnly
+                isAudioOnly = request.isAudioOnly,
+                streamUrl = request.streamUrl
             )
 
             // Stream the download in the background
@@ -106,6 +113,63 @@ fun Route.downloadRoutes() {
             download?.let { File(it.filePath).delete() }
             DownloadRepository.delete(id)
             call.respond(HttpStatusCode.NoContent)
+        }
+
+        // Retry a FAILED download
+        post("/{id}/retry") {
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid id")
+
+            val download = DownloadRepository.getById(id)
+                ?: return@post call.respond(HttpStatusCode.NotFound)
+
+            if (download.status != "FAILED") {
+                return@post call.respond(
+                    HttpStatusCode.Conflict,
+                    "Only FAILED downloads can be retried (current status: ${download.status})"
+                )
+            }
+
+            val streamUrl = DownloadRepository.resetForRetry(id)
+                ?: return@post call.respond(
+                    HttpStatusCode.UnprocessableEntity,
+                    "No stream URL stored for this download, please restart it from the watch page"
+                )
+
+            // Re-launch the background download job
+            call.application.launch(Dispatchers.IO) {
+                try {
+                    val response = httpClient.get(streamUrl) {
+                        headers {
+                            append(HttpHeaders.UserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                        }
+                    }
+                    val contentLength = response.contentLength() ?: -1L
+                    val outputFile = File(download.filePath)
+                    var downloadedBytes = 0L
+
+                    response.bodyAsChannel().also { channel ->
+                        outputFile.outputStream().use { outputStream ->
+                            val buffer = ByteArray(8192)
+                            while (!channel.isClosedForRead) {
+                                val read = channel.readAvailable(buffer, 0, buffer.size)
+                                if (read > 0) {
+                                    outputStream.write(buffer, 0, read)
+                                    downloadedBytes += read.toLong()
+                                    DownloadRepository.updateProgress(id, downloadedBytes, contentLength)
+                                }
+                            }
+                        }
+                    }
+
+                    DownloadRepository.markCompleted(id, downloadedBytes)
+                } catch (e: Exception) {
+                    println("Retry download failed for $id: ${e.message}")
+                    DownloadRepository.markFailed(id)
+                }
+            }
+
+            call.respond(HttpStatusCode.Accepted, mapOf("id" to id))
         }
 
         // Serve the actual downloaded file

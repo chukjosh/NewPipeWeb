@@ -253,3 +253,11 @@ export function useDeleteDownload() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['downloads'] }),
   })
 }
+
+export function useRetryDownload() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => downloadApi.retry(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['downloads'] }),
+  })
+}

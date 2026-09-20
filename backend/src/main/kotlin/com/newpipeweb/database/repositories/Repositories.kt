@@ -260,7 +260,8 @@ object DownloadRepository {
     fun create(
         videoId: String, title: String, uploader: String,
         thumbnailUrl: String, filePath: String,
-        quality: String, isAudioOnly: Boolean
+        quality: String, isAudioOnly: Boolean,
+        streamUrl: String?
     ): Int = transaction {
         DownloadsTable.insert {
             it[DownloadsTable.videoId] = videoId
@@ -270,6 +271,7 @@ object DownloadRepository {
             it[DownloadsTable.filePath] = filePath
             it[DownloadsTable.quality] = quality
             it[DownloadsTable.isAudioOnly] = isAudioOnly
+            it[DownloadsTable.streamUrl] = streamUrl
             it[status] = "PENDING"
             it[createdAt] = LocalDateTime.now()
         }[DownloadsTable.id]
@@ -301,6 +303,24 @@ object DownloadRepository {
         DownloadsTable.deleteWhere { DownloadsTable.id eq id }
     }
 
+    /**
+     * Resets a FAILED download back to PENDING so it can be re-queued.
+     * Returns the streamUrl needed to restart the background job, or null if
+     * none was stored (e.g. old records created before this column existed).
+     */
+    fun resetForRetry(id: Int): String? = transaction {
+        val row = DownloadsTable.selectAll()
+            .where { DownloadsTable.id eq id }
+            .firstOrNull() ?: return@transaction null
+        val url = row[DownloadsTable.streamUrl]
+        DownloadsTable.update({ DownloadsTable.id eq id }) {
+            it[status] = "PENDING"
+            it[downloadedBytes] = 0
+            it[fileSize] = -1
+        }
+        url
+    }
+
     private fun ResultRow.toDownloadModel() = DownloadModel(
         id = this[DownloadsTable.id],
         videoId = this[DownloadsTable.videoId],
@@ -313,6 +333,7 @@ object DownloadRepository {
         status = this[DownloadsTable.status],
         quality = this[DownloadsTable.quality],
         isAudioOnly = this[DownloadsTable.isAudioOnly],
-        createdAt = this[DownloadsTable.createdAt].format(formatter)
+        createdAt = this[DownloadsTable.createdAt].format(formatter),
+        streamUrl = this[DownloadsTable.streamUrl]
     )
 }
