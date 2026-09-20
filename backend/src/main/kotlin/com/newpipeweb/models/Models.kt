@@ -238,7 +238,8 @@ data class DownloadModel(
     val quality: String,
     val isAudioOnly: Boolean,
     val createdAt: String,
-    val service: String = "youtube"
+    val service: String = "youtube",
+    val streamUrl: String? = null  // stored for retry; null on legacy records
 )
 
 // ─────────────────────────────────────────────
