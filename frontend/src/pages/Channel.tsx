@@ -1,5 +1,5 @@
 // Channel.tsx
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { useChannel, useSubscribe, useSubscriptions, useUnsubscribe } from '../hooks'
 import VideoGrid from '../components/video/VideoGrid'
 import { LoadingSpinner, ErrorMessage } from '../components/common'
@@ -7,7 +7,10 @@ import { Bell, BellOff } from 'lucide-react'
 
 export default function Channel() {
   const { id } = useParams<{ id: string }>()
-  const { data: channel, isLoading, isError, refetch } = useChannel(id ?? '')
+  const [searchParams] = useSearchParams()
+  const channelUrl = searchParams.get('url') ?? ''
+  const channelKey = channelUrl || id || ''
+  const { data: channel, isLoading, isError, refetch } = useChannel(channelKey)
   const { data: subscriptions } = useSubscriptions()
   const subscribe = useSubscribe()
   const unsubscribe = useUnsubscribe()
@@ -15,7 +18,9 @@ export default function Channel() {
   if (isLoading) return <LoadingSpinner text="Loading channel..." />
   if (isError || !channel) return <ErrorMessage message="Could not load channel." onRetry={refetch} />
 
-  const sub = subscriptions?.find(s => s.channelId === id)
+  const sub = subscriptions?.find(s =>
+    s.channelId === id || s.channelUrl === channel?.url || s.channelUrl === channelUrl
+  )
 
   const handleSubscribeToggle = () => {
     if (sub) {

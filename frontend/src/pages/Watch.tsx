@@ -335,7 +335,7 @@ export default function Watch() {
       unsubscribe.mutate(sub.id)
     } else {
       subscribe.mutate({
-        channelId: contentKey,
+        channelId: stream.uploaderUrl,
         channelName: stream.uploader,
         channelUrl: stream.uploaderUrl,
         avatarUrl: '',
@@ -506,7 +506,7 @@ export default function Watch() {
           <div className="flex items-center justify-between mt-3 flex-wrap gap-3">
             {/* Channel link */}
             <Link
-              to={`/channel/${id}`}
+              to={`/channel?url=${encodeURIComponent(stream.uploaderUrl)}`}
               className="text-sm text-neutral-300 hover:text-white transition-colors font-medium"
             >
               {stream.uploader}
