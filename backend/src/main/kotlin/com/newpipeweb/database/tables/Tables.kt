@@ -70,5 +70,7 @@ object DownloadsTable : Table("downloads") {
     val quality = varchar("quality", 50)
     val isAudioOnly = bool("is_audio_only").default(false)
     val createdAt = datetime("created_at")
+    // Stored so that FAILED downloads can be retried without going back to the watch page
+    val streamUrl = varchar("stream_url", 4000).nullable()
     override val primaryKey = PrimaryKey(id)
 }

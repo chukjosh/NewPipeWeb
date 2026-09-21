@@ -12,14 +12,90 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import com.newpipeweb.util.resolveDownloadsDir
+import java.io.FileOutputStream
 import java.io.File
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import io.ktor.utils.io.readAvailable
+import java.io.BufferedOutputStream
+import java.util.concurrent.ConcurrentHashMap
 
 
 
-private val httpClient = HttpClient(CIO)
+private val httpClient = HttpClient(CIO) {
+    expectSuccess = false
+    engine {
+        requestTimeout = 0
+    }
+}
+
+private val downloadJobs = ConcurrentHashMap<Int, Job>()
+private const val DOWNLOAD_BUFFER_SIZE = 64 * 1024
+private const val PROGRESS_UPDATE_INTERVAL_MS = 500L
+private const val PROGRESS_UPDATE_BYTES = 1024L * 1024L
+
+private fun Application.launchDownload(
+    downloadId: Int,
+    streamUrl: String,
+    filePath: String,
+    resume: Boolean
+): Job = launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
+    try {
+        val outputFile = File(filePath)
+        val existingBytes = if (resume && outputFile.exists()) outputFile.length() else 0L
+        val response = httpClient.get(streamUrl) {
+            headers {
+                append(HttpHeaders.UserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                if (existingBytes > 0) {
+                    append(HttpHeaders.Range, "bytes=$existingBytes-")
+                }
+            }
+        }
+        val appendToFile = existingBytes > 0 && response.status == HttpStatusCode.PartialContent
+        val startingBytes = if (appendToFile) existingBytes else 0L
+        val responseLength = response.contentLength() ?: -1L
+        val contentLength = if (responseLength > 0) responseLength + startingBytes else responseLength
+        var downloadedBytes = startingBytes
+
+        response.bodyAsChannel().also { channel ->
+            BufferedOutputStream(
+                FileOutputStream(outputFile, appendToFile),
+                DOWNLOAD_BUFFER_SIZE
+            ).use { outputStream ->
+                val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
+                var lastProgressUpdateAt = System.currentTimeMillis()
+                var lastProgressUpdateBytes = startingBytes
+                while (!channel.isClosedForRead) {
+                    val read = channel.readAvailable(buffer, 0, buffer.size)
+                    if (read > 0) {
+                        outputStream.write(buffer, 0, read)
+                        downloadedBytes += read.toLong()
+                        val now = System.currentTimeMillis()
+                        if (downloadedBytes - lastProgressUpdateBytes >= PROGRESS_UPDATE_BYTES ||
+                            now - lastProgressUpdateAt >= PROGRESS_UPDATE_INTERVAL_MS
+                        ) {
+                            DownloadRepository.updateProgress(downloadId, downloadedBytes, contentLength)
+                            lastProgressUpdateAt = now
+                            lastProgressUpdateBytes = downloadedBytes
+                        }
+                    }
+                }
+            }
+        }
+
+        DownloadRepository.markCompleted(downloadId, downloadedBytes)
+    } catch (e: Exception) {
+        if (e is kotlinx.coroutines.CancellationException) throw e
+        println("Download failed for $downloadId: ${e.message}")
+        e.printStackTrace()
+        DownloadRepository.markFailed(downloadId)
+    } finally {
+        downloadJobs.remove(downloadId)
+    }
+}
 
 fun Route.downloadRoutes() {
     route("/downloads") {
@@ -38,7 +114,8 @@ fun Route.downloadRoutes() {
 
             val ext = if (request.isAudioOnly) "m4a" else "mp4"
             val safeTitle = request.title.replace(Regex("[^a-zA-Z0-9._-]"), "_").take(100)
-            val filePath = "${downloadsDir.absolutePath}/${safeTitle}_${request.videoId}.$ext"
+            val safeVideoId = request.videoId.replace(Regex("[^a-zA-Z0-9._-]"), "_").take(50)
+            val filePath = "${downloadsDir.absolutePath}/${safeTitle}_${safeVideoId}.$ext"
 
             val downloadId = DownloadRepository.create(
                 videoId = request.videoId,
@@ -47,44 +124,14 @@ fun Route.downloadRoutes() {
                 thumbnailUrl = request.thumbnailUrl,
                 filePath = filePath,
                 quality = request.quality,
-                isAudioOnly = request.isAudioOnly
+                isAudioOnly = request.isAudioOnly,
+                streamUrl = request.streamUrl
             )
 
             // Stream the download in the background
-            call.application.launch(Dispatchers.IO) {
-                try {
-                    val response = httpClient.get(request.streamUrl) {
-                        headers {
-                            append(HttpHeaders.UserAgent, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-                        }
-                    }
-                    val contentLength = response.contentLength() ?: -1L
-                    val outputFile = File(filePath)
-                    var downloadedBytes = 0L
-
-                    response.bodyAsChannel().also { channel ->
-                        outputFile.outputStream().use { outputStream ->
-                            val buffer = ByteArray(8192)
-                            while (!channel.isClosedForRead) {
-                                val read = channel.readAvailable(buffer, 0, buffer.size)
-                                if (read > 0) {
-                                    outputStream.write(buffer, 0, read)
-                                    downloadedBytes += read.toLong()
-                                    DownloadRepository.updateProgress(
-                                        downloadId, downloadedBytes, contentLength
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    DownloadRepository.markCompleted(downloadId, downloadedBytes)
-                } catch (e: Exception) {
-                    println("Download failed for $downloadId: ${e.message}")
-                    e.printStackTrace()
-                    DownloadRepository.markFailed(downloadId)
-                }
-            }
+            val downloadJob = call.application.launchDownload(downloadId, request.streamUrl, filePath, resume = false)
+            downloadJobs[downloadId] = downloadJob
+            downloadJob.start()
 
             call.respond(HttpStatusCode.Accepted, mapOf("id" to downloadId))
         }
@@ -98,14 +145,78 @@ fun Route.downloadRoutes() {
             call.respond(download)
         }
 
+        // Pause an active download while preserving its partial file.
+        post("/{id}/pause") {
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid id")
+            val download = DownloadRepository.getById(id)
+                ?: return@post call.respond(HttpStatusCode.NotFound)
+            if (download.status != "PENDING" && download.status != "DOWNLOADING") {
+                return@post call.respond(HttpStatusCode.Conflict, "Download is not active")
+            }
+
+            downloadJobs.remove(id)?.cancelAndJoin()
+            DownloadRepository.markPaused(id)
+            call.respond(HttpStatusCode.NoContent)
+        }
+
+        // Resume a paused download, continuing from the existing partial file when supported.
+        post("/{id}/resume") {
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid id")
+            val download = DownloadRepository.getById(id)
+                ?: return@post call.respond(HttpStatusCode.NotFound)
+            if (download.status != "PAUSED") {
+                return@post call.respond(HttpStatusCode.Conflict, "Only paused downloads can be resumed")
+            }
+            val streamUrl = download.streamUrl
+                ?: return@post call.respond(HttpStatusCode.UnprocessableEntity, "No stream URL stored")
+
+            DownloadRepository.markPending(id)
+            val downloadJob = call.application.launchDownload(id, streamUrl, download.filePath, resume = true)
+            downloadJobs[id] = downloadJob
+            downloadJob.start()
+            call.respond(HttpStatusCode.Accepted, mapOf("id" to id))
+        }
+
         // Delete a download record (and optionally the file)
         delete("/{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@delete call.respond(HttpStatusCode.BadRequest, "Invalid id")
+            downloadJobs.remove(id)?.cancelAndJoin()
             val download = DownloadRepository.getById(id)
             download?.let { File(it.filePath).delete() }
             DownloadRepository.delete(id)
             call.respond(HttpStatusCode.NoContent)
+        }
+
+        // Retry a FAILED download
+        post("/{id}/retry") {
+            val id = call.parameters["id"]?.toIntOrNull()
+                ?: return@post call.respond(HttpStatusCode.BadRequest, "Invalid id")
+
+            val download = DownloadRepository.getById(id)
+                ?: return@post call.respond(HttpStatusCode.NotFound)
+
+            if (download.status != "FAILED") {
+                return@post call.respond(
+                    HttpStatusCode.Conflict,
+                    "Only FAILED downloads can be retried (current status: ${download.status})"
+                )
+            }
+
+            val streamUrl = DownloadRepository.resetForRetry(id)
+                ?: return@post call.respond(
+                    HttpStatusCode.UnprocessableEntity,
+                    "No stream URL stored for this download, please restart it from the watch page"
+                )
+
+            // Re-launch the background download job
+            val downloadJob = call.application.launchDownload(id, streamUrl, download.filePath, resume = false)
+            downloadJobs[id] = downloadJob
+            downloadJob.start()
+
+            call.respond(HttpStatusCode.Accepted, mapOf("id" to id))
         }
 
         // Serve the actual downloaded file

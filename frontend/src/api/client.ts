@@ -203,6 +203,16 @@ export const downloadApi = {
     quality: string; isAudioOnly?: boolean; service?: string
   }) => api.post<{ id: number }>('/downloads', data).then(r => r.data),
 
+  /** Re-queue a FAILED download using its stored stream URL */
+  retry: (id: number) =>
+    api.post<{ id: number }>(`/downloads/${id}/retry`).then(r => r.data),
+
+  pause: (id: number) =>
+    api.post(`/downloads/${id}/pause`),
+
+  resume: (id: number) =>
+    api.post<{ id: number }>(`/downloads/${id}/resume`).then(r => r.data),
+
   delete: (id: number) =>
     api.delete(`/downloads/${id}`),
 

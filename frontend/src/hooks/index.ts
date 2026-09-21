@@ -253,3 +253,27 @@ export function useDeleteDownload() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['downloads'] }),
   })
 }
+
+export function useRetryDownload() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => downloadApi.retry(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['downloads'] }),
+  })
+}
+
+export function usePauseDownload() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => downloadApi.pause(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['downloads'] }),
+  })
+}
+
+export function useResumeDownload() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => downloadApi.resume(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['downloads'] }),
+  })
+}

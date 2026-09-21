@@ -205,7 +205,7 @@ export interface SubscriptionModel {
 // Download types
 // ─────────────────────────────────────────────
 
-export type DownloadStatus = 'PENDING' | 'DOWNLOADING' | 'COMPLETED' | 'FAILED'
+export type DownloadStatus = 'PENDING' | 'DOWNLOADING' | 'PAUSED' | 'COMPLETED' | 'FAILED'
 
 export interface DownloadModel {
   id: number
@@ -221,4 +221,5 @@ export interface DownloadModel {
   isAudioOnly: boolean
   createdAt: string
   service: string
+  streamUrl?: string | null  // stored for retry; null on legacy records
 }

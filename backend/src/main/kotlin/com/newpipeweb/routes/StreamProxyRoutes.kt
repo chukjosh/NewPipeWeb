@@ -16,7 +16,10 @@ import java.net.URI
 private val proxyClient = HttpClient(CIO) {
     expectSuccess = false
     engine {
-        requestTimeout = 60_000
+        // 0 = no timeout — the proxy is a pure pipe; killing it mid-stream
+        // causes a "Cannot write to a channel" crash on the already-committed
+        // response. Let the client's own TCP connection determine liveness.
+        requestTimeout = 0
     }
 }
 
@@ -87,13 +90,21 @@ fun Route.streamProxyRoutes() {
                     }
 
                     override suspend fun writeTo(channel: ByteWriteChannel) {
-                        val body = upstream.bodyAsChannel()
-                        val buffer = ByteArray(8192)
-                        while (!body.isClosedForRead) {
-                            val read = body.readAvailable(buffer, 0, buffer.size)
-                            if (read <= 0) break
-                            channel.writeFully(buffer, 0, read)
-                            channel.flush()
+                        try {
+                            val body = upstream.bodyAsChannel()
+                            val buffer = ByteArray(8192)
+                            while (!body.isClosedForRead) {
+                                val read = body.readAvailable(buffer, 0, buffer.size)
+                                if (read <= 0) break
+                                channel.writeFully(buffer, 0, read)
+                                channel.flush()
+                            }
+                        } catch (e: Exception) {
+                            // Response is already committed — calling call.respond() here
+                            // would throw "Cannot write to a channel". Close the write
+                            // channel with the cause so the client gets a clean EOF/reset.
+                            println("[ERROR] Proxy stream interrupted for $rawUrl: ${e.message}")
+                            channel.close(e)
                         }
                     }
                 })
