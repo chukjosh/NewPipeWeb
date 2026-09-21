@@ -23,11 +23,11 @@ export default function Subscriptions() {
             <img
               src={sub.avatarUrl} alt={sub.channelName}
               className="w-16 h-16 rounded-full bg-neutral-800 cursor-pointer"
-              onClick={() => navigate(`/channel/${sub.channelId}`)}
+              onClick={() => navigate(`/channel?url=${encodeURIComponent(sub.channelUrl)}`)}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
             <p className="text-sm font-medium text-center line-clamp-2 cursor-pointer"
-              onClick={() => navigate(`/channel/${sub.channelId}`)}>
+              onClick={() => navigate(`/channel?url=${encodeURIComponent(sub.channelUrl)}`)}>
               {sub.channelName}
             </p>
             <button onClick={() => unsubscribe.mutate(sub.id)}

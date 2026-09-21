@@ -132,17 +132,17 @@ fun Route.subscriptionRoutes() {
 
 fun Route.feedRoutes() {
     get("/feed") {
-        val channelIds = SubscriptionRepository.getAllChannelIds()
-        if (channelIds.isEmpty()) {
+        val subscriptions = SubscriptionRepository.getAll()
+        if (subscriptions.isEmpty()) {
             call.respond(emptyList<Any>())
             return@get
         }
 
         // Fetch latest videos from each subscribed channel (in parallel via coroutines)
-        val feedVideos = channelIds
-            .flatMap { channelId ->
+        val feedVideos = subscriptions
+            .flatMap { subscription ->
                 try {
-                    val channel = com.newpipeweb.services.YouTubeService.getChannel(channelId)
+                    val channel = com.newpipeweb.services.ExtractorService.getChannel(subscription.channelUrl)
                     channel.videos.take(5) // latest 5 per channel
                 } catch (e: Exception) {
                     emptyList()
