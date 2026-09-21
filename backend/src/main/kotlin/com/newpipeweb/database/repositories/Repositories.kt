@@ -285,6 +285,18 @@ object DownloadRepository {
         }
     }
 
+    fun markPaused(id: Int) = transaction {
+        DownloadsTable.update({ DownloadsTable.id eq id }) {
+            it[status] = "PAUSED"
+        }
+    }
+
+    fun markPending(id: Int) = transaction {
+        DownloadsTable.update({ DownloadsTable.id eq id }) {
+            it[status] = "PENDING"
+        }
+    }
+
     fun markCompleted(id: Int, fileSize: Long) = transaction {
         DownloadsTable.update({ DownloadsTable.id eq id }) {
             it[DownloadsTable.fileSize] = fileSize

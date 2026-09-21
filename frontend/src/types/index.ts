@@ -205,7 +205,7 @@ export interface SubscriptionModel {
 // Download types
 // ─────────────────────────────────────────────
 
-export type DownloadStatus = 'PENDING' | 'DOWNLOADING' | 'COMPLETED' | 'FAILED'
+export type DownloadStatus = 'PENDING' | 'DOWNLOADING' | 'PAUSED' | 'COMPLETED' | 'FAILED'
 
 export interface DownloadModel {
   id: number
