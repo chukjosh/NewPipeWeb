@@ -234,7 +234,7 @@ data class DownloadModel(
     val filePath: String,
     val fileSize: Long,
     val downloadedBytes: Long,
-    val status: String,            // PENDING | DOWNLOADING | COMPLETED | FAILED
+    val status: String,            // PENDING | DOWNLOADING | PAUSED | COMPLETED | FAILED
     val quality: String,
     val isAudioOnly: Boolean,
     val createdAt: String,
