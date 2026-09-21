@@ -51,7 +51,8 @@ export default function App() {
                 <Route path="/watch"          element={<Watch />}         />
                 <Route path="/watch/:id"      element={<Watch />}         />
                 <Route path="/search"         element={<Search />}        />
-                <Route path="/channel/:id"    element={<Channel />}       />
+                <Route path="/channel"         element={<Channel />}       />
+                <Route path="/channel/:id"      element={<Channel />}       />
                 <Route path="/history"        element={<History />}       />
                 <Route path="/watchlist"      element={<Watchlist />}     />
                 <Route path="/library"        element={<Library />}       />

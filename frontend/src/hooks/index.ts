@@ -51,7 +51,9 @@ export function useStream(id: string) {
 export function useChannel(id: string) {
   return useQuery({
     queryKey: ['channel', id],
-    queryFn: () => extractorApi.getChannelById(id),
+    queryFn: () => id.startsWith('http')
+      ? extractorApi.getChannel(id)
+      : extractorApi.getChannelById(id),
     enabled: !!id,
   })
 }

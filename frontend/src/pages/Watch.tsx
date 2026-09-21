@@ -335,7 +335,7 @@ export default function Watch() {
       unsubscribe.mutate(sub.id)
     } else {
       subscribe.mutate({
-        channelId: contentKey,
+        channelId: stream.uploaderUrl,
         channelName: stream.uploader,
         channelUrl: stream.uploaderUrl,
         avatarUrl: '',
