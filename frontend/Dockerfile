@@ -5,7 +5,10 @@
 # Use the Node.js 22 LTS Alpine image.
 # This stage contains everything needed to install
 # dependencies and build the application.
-FROM node:22-alpine AS builder
+FROM node:22-alpine3.22 AS builder
+
+# Apply the latest security fixes to the build environment packages.
+RUN apk upgrade --no-cache
 
 # Set the working directory inside the container.
 WORKDIR /app
@@ -13,7 +16,7 @@ WORKDIR /app
 # Copy only the dependency files first.
 # This allows Docker to cache dependency installation
 # unless package.json or pnpm-lock.yaml changes.
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Enable Corepack.
 # Corepack automatically installs the pnpm version
@@ -35,7 +38,10 @@ RUN pnpm build
 # ======================================================
 
 # Use a lightweight Nginx image to serve the built files.
-FROM nginx:alpine
+FROM nginx:1.29-alpine3.22
+
+# Apply the latest security fixes to the Alpine runtime packages.
+RUN apk upgrade --no-cache
 
 # Copy the compiled application from the builder stage.
 COPY --from=builder /app/dist /usr/share/nginx/html
