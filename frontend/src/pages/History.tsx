@@ -36,7 +36,7 @@ export function History() {
               <p className="text-xs text-neutral-400 mt-1">{item.uploader}</p>
               <p className="text-xs text-neutral-500 mt-0.5">{new Date(item.watchedAt).toLocaleString()}</p>
             </div>
-            <button onClick={() => deleteOne.mutate(item.id)} className="p-2 hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-white transition-colors shrink-0">
+            <button onClick={() => deleteOne.mutate(item.id)} className="p-2 hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-primary transition-colors shrink-0">
               <Trash2 size={16} />
             </button>
           </div>

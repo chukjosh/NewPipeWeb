@@ -139,6 +139,7 @@ object PlaylistRepository {
                 PlaylistVideoModel(
                     id = row[PlaylistItemsTable.id],
                     videoId = row[PlaylistItemsTable.videoId],
+                    url = row[PlaylistItemsTable.url],
                     title = row[PlaylistItemsTable.title],
                     uploader = row[PlaylistItemsTable.uploader],
                     thumbnailUrl = row[PlaylistItemsTable.thumbnailUrl],
@@ -179,6 +180,7 @@ object PlaylistRepository {
         PlaylistItemsTable.insert {
             it[PlaylistItemsTable.playlistId] = playlistId
             it[videoId] = request.videoId
+            it[PlaylistItemsTable.url] = request.url
             it[title] = request.title
             it[uploader] = request.uploader
             it[thumbnailUrl] = request.thumbnailUrl

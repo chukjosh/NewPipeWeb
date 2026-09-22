@@ -14,6 +14,7 @@ import { useState } from 'react'
 import { X, Plus, Check, ListVideo } from 'lucide-react'
 import {
   usePlaylists,
+  usePlaylistMembership,
   useAddVideoToPlaylist,
   useCreatePlaylist,
 } from '../../hooks'
@@ -25,13 +26,18 @@ interface AddToPlaylistModalProps {
   uploader: string
   thumbnailUrl: string
   duration: number
+  url?: string
   onClose: () => void
 }
 
 export default function AddToPlaylistModal({
-  videoId, title, uploader, thumbnailUrl, duration, onClose
+  videoId, title, uploader, thumbnailUrl, duration, url, onClose
 }: AddToPlaylistModalProps) {
   const { data: playlists, isLoading } = usePlaylists()
+  const existingAddedTo = usePlaylistMembership(
+    playlists?.map(playlist => playlist.id) ?? [],
+    videoId,
+  )
   const addVideo    = useAddVideoToPlaylist()
   const createPl    = useCreatePlaylist()
 
@@ -41,24 +47,33 @@ export default function AddToPlaylistModal({
   // New playlist creation form state
   const [showNewForm, setShowNewForm] = useState(false)
   const [newName, setNewName]         = useState('')
+  const [message, setMessage]         = useState('')
 
   /** Add the current video to an existing playlist */
   const handleAddTo = async (playlistId: number) => {
-    await addVideo.mutateAsync({
-      playlistId,
-      data: { videoId, title, uploader, thumbnailUrl, duration },
-    })
-    // Show a checkmark temporarily
-    setAddedTo(prev => new Set([...prev, playlistId]))
+    try {
+      await addVideo.mutateAsync({
+        playlistId,
+        data: { videoId, title, uploader, thumbnailUrl, duration, url },
+      })
+      setAddedTo(prev => new Set([...prev, playlistId]))
+      setMessage('Video added to playlist.')
+    } catch {
+      setMessage('Could not add video to playlist.')
+    }
   }
 
   /** Create a new playlist then immediately add the video to it */
   const handleCreateAndAdd = async () => {
     if (!newName.trim()) return
-    const { id } = await createPl.mutateAsync({ name: newName.trim() })
-    await handleAddTo(id)
-    setNewName('')
-    setShowNewForm(false)
+    try {
+      const { id } = await createPl.mutateAsync({ name: newName.trim() })
+      await handleAddTo(id)
+      setNewName('')
+      setShowNewForm(false)
+    } catch {
+      setMessage('Could not create playlist.')
+    }
   }
 
   return (
@@ -98,7 +113,7 @@ export default function AddToPlaylistModal({
 
           {/* Render each playlist as a toggleable row */}
           {playlists?.map(pl => {
-            const wasAdded = addedTo.has(pl.id)
+            const wasAdded = addedTo.has(pl.id) || existingAddedTo.has(pl.id)
             return (
               <button
                 key={pl.id}
@@ -119,11 +134,21 @@ export default function AddToPlaylistModal({
                   <p className="text-xs text-neutral-400">{pl.videoCount} videos</p>
                 </div>
                 {/* Checkmark when added */}
-                {wasAdded && <Check size={16} className="text-green-500 shrink-0" />}
+                {wasAdded && (
+                  <span className="flex items-center gap-1 text-xs text-green-500 shrink-0">
+                    <Check size={16} /> Added
+                  </span>
+                )}
               </button>
             )
           })}
         </div>
+
+        {message && (
+          <p className="px-4 pb-2 text-xs text-green-500" role="status" aria-live="polite">
+            {message}
+          </p>
+        )}
 
         {/* New playlist form */}
         <div className="p-4 border-t border-neutral-800">
@@ -150,7 +175,7 @@ export default function AddToPlaylistModal({
             <button
               onClick={() => setShowNewForm(true)}
               className="w-full flex items-center gap-2 text-sm text-neutral-300
-                         hover:text-white transition-colors py-1"
+                         hover:text-primary transition-colors py-1"
             >
               <Plus size={16} className="text-red-500" />
               New playlist

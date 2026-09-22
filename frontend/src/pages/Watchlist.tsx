@@ -32,7 +32,7 @@ export default function Watchlist() {
               <p className="text-xs text-neutral-400 mt-1">{item.uploader}</p>
             </div>
             <button onClick={() => remove.mutate(item.id)}
-              className="p-2 hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-white transition-colors shrink-0">
+              className="p-2 hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-primary transition-colors shrink-0">
               <Trash2 size={16} />
             </button>
           </div>

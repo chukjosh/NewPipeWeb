@@ -36,7 +36,7 @@ export default function Search() {
     <div className="p-6">
       <p className="text-neutral-400 text-sm mb-4">
         Results for{' '}
-        <span className="text-white font-medium">"{query}"</span>
+        <span className="text-primary font-medium">"{query}"</span>
         {' '}on{' '}
         <span className="text-red-400 font-medium capitalize">{service}</span>
       </p>

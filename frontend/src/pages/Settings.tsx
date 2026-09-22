@@ -13,7 +13,7 @@
 
 import React from 'react';
 // import { useNavigate } from 'react-router-dom' // Commented out to fix TS6133
-import { Trash2, SkipForward, Info } from 'lucide-react'
+import { Trash2, SkipForward, Info, X } from 'lucide-react'
 import {
   useAppStore,
   SPONSOR_CATEGORY_LABELS,
@@ -43,10 +43,8 @@ export default function Settings() {
   // const navigate = useNavigate() // Commented out to fix TS6133
   const clearHistory = useClearHistory()
 
-  // Pull storage settings and explicitly cast type to resolve TS2339
-  const { data: storageSettings } = useStorageSettings() as {
-    data: { downloadsDir: string; dataDir: string; trendingCountry?: string } | undefined
-  }
+  // Pull persisted backend settings.
+  const { data: storageSettings } = useStorageSettings()
   const updateSettings = useUpdateStorageSettings()
   const trendingCountry = storageSettings?.trendingCountry ?? 'US'
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -63,7 +61,7 @@ export default function Settings() {
     preferredSubtitleLang, setPreferredSubtitleLang,
     sponsorBlockEnabled, setSponsorBlockEnabled,
     sponsorBlockCategories, setSponsorBlockCategories,
-    recentSearches, clearRecentSearches,
+    recentSearches, removeRecentSearch, clearRecentSearches,
   } = useAppStore()
 
   /** Toggle a SponsorBlock category on/off */
@@ -95,7 +93,7 @@ export default function Settings() {
             <select
               value={trendingCountry}
               onChange={handleCountryChange}
-              className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-red-500"
+              className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-1.5 text-sm text-primary outline-none focus:border-red-500"
             >
               {/* Add more country codes as needed */}
               <option value="US">United States</option>
@@ -138,7 +136,7 @@ export default function Settings() {
               value={preferredQuality}
               onChange={e => setPreferredQuality(e.target.value)}
               className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-1.5
-                         text-sm text-white outline-none focus:border-red-500"
+                         text-sm text-primary outline-none focus:border-red-500"
             >
               {QUALITY_OPTIONS.map(q => (
                 <option key={q} value={q}>{q}</option>
@@ -156,7 +154,7 @@ export default function Settings() {
               value={playbackRate}
               onChange={e => setPlaybackRate(Number(e.target.value))}
               className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-1.5
-                         text-sm text-white outline-none focus:border-red-500"
+                         text-sm text-primary outline-none focus:border-red-500"
             >
               {PLAYBACK_SPEEDS.map(s => (
                 <option key={s} value={s}>{s}x</option>
@@ -192,7 +190,7 @@ export default function Settings() {
                 maxLength={5}
                 placeholder="en"
                 className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-1.5
-                           text-sm text-white outline-none focus:border-red-500 w-20 text-center"
+                           text-sm text-primary outline-none focus:border-red-500 w-20 text-center"
               />
             </div>
           )}
@@ -254,7 +252,7 @@ export default function Settings() {
                       onChange={() => toggleCategory(cat)}
                       className="w-4 h-4 accent-red-600 rounded cursor-pointer"
                     />
-                    <span className="text-sm text-neutral-200 group-hover:text-white transition-colors">
+                    <span className="text-sm text-neutral-200 group-hover:text-primary transition-colors">
                       {SPONSOR_CATEGORY_LABELS[cat]}
                     </span>
                   </label>
@@ -314,6 +312,24 @@ export default function Settings() {
               <Trash2 size={13} /> Clear searches
             </button>
           </div>
+          {recentSearches.length > 0 && (
+            <div className="border-t border-neutral-800 pt-3 space-y-1">
+              {recentSearches.map(search => (
+                <div key={search} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="truncate text-neutral-300">{search}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeRecentSearch(search)}
+                    className="p-1 text-neutral-500 hover:text-primary rounded"
+                    aria-label={`Remove ${search} from recent searches`}
+                    title="Remove search"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -323,6 +339,16 @@ export default function Settings() {
         <div className="bg-neutral-900 rounded-xl p-4 space-y-2 text-sm text-neutral-400">
           <p><span className="text-neutral-200 font-medium">NewPipe Web</span> v1.0.0</p>
           <p>Powered by <span className="text-neutral-200">NewPipeExtractor v0.26.0</span></p>
+          <p>
+            <a
+              href="https://github.com/chukjosh/NewPipeWeb"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-red-400 hover:underline"
+            >
+              NewPipeWeb on GitHub ↗
+            </a>
+          </p>
           <p>
             <a
               href="https://github.com/TeamNewPipe/NewPipeExtractor"

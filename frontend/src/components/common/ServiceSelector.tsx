@@ -51,7 +51,7 @@ export default function ServiceSelector({ value, onChange, filter, className }: 
         onChange={e => onChange(e.target.value)}
         className={[
           'appearance-none bg-neutral-800 border border-neutral-700',
-          'rounded-lg pl-8 pr-3 py-2 text-sm text-white',
+          'rounded-lg pl-8 pr-3 py-2 text-primary',
           'outline-none focus:border-red-500 cursor-pointer',
           'transition-colors hover:bg-neutral-700 w-full min-w-0',
           className ?? '',

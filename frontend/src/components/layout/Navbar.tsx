@@ -14,7 +14,7 @@
 
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Search, Sun, Moon, Download, Menu } from 'lucide-react'
+import { Search, Sun, Moon, Download, Menu, Clock3, X } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import ServiceSelector from '../common/ServiceSelector'
 
@@ -26,7 +26,14 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const [query, setQuery]         = useState('')
   const navigate                  = useNavigate()
   const [searchParams]            = useSearchParams()
-  const { theme, toggleTheme, addRecentSearch } = useAppStore()
+  const {
+    theme,
+    toggleTheme,
+    addRecentSearch,
+    recentSearches,
+    removeRecentSearch,
+  } = useAppStore()
+  const [showSearchHistory, setShowSearchHistory] = useState(false)
 
   // Preserve the currently selected service across searches
   const [service, setService] = useState(
@@ -36,9 +43,19 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (!query.trim()) return
-    addRecentSearch(query.trim())
-    navigate(`/search?q=${encodeURIComponent(query.trim())}&service=${service}`)
+    submitSearch(query.trim())
   }
+
+  const submitSearch = (searchQuery: string) => {
+    addRecentSearch(searchQuery)
+    setQuery(searchQuery)
+    setShowSearchHistory(false)
+    navigate(`/search?q=${encodeURIComponent(searchQuery)}&service=${service}`)
+  }
+
+  const matchingSearches = recentSearches.filter(search =>
+    !query.trim() || search.toLowerCase().includes(query.trim().toLowerCase())
+  )
 
   return (
     <nav className="bg-neutral-900 border-b border-neutral-800 z-50 shrink-0
@@ -104,11 +121,46 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
             <input
               type="text"
               value={query}
-              onChange={e => setQuery(e.target.value)}
+              onChange={e => {
+                setQuery(e.target.value)
+                setShowSearchHistory(true)
+              }}
+              onFocus={() => setShowSearchHistory(true)}
+              onBlur={() => setTimeout(() => setShowSearchHistory(false), 150)}
               placeholder={`Search ${service === 'youtube' ? 'YouTube' : service}...`}
               className="input pr-12 h-10 md:h-auto"
               aria-label="Search"
             />
+            {showSearchHistory && matchingSearches.length > 0 && (
+              <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-neutral-900 border border-neutral-700 rounded-lg shadow-xl overflow-hidden">
+                <p className="px-3 py-2 text-xs text-neutral-500 uppercase tracking-wide">
+                  Recent searches
+                </p>
+                {matchingSearches.map(search => (
+                  <div key={search} className="flex items-center gap-2 px-3 py-2 hover:bg-neutral-800">
+                    <button
+                      type="button"
+                      onMouseDown={event => event.preventDefault()}
+                      onClick={() => submitSearch(search)}
+                      className="flex items-center gap-2 min-w-0 flex-1 text-left text-sm text-neutral-300 hover:text-primary"
+                    >
+                      <Clock3 size={14} className="shrink-0 text-neutral-500" />
+                      <span className="truncate">{search}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={event => event.preventDefault()}
+                      onClick={() => removeRecentSearch(search)}
+                      className="p-1 text-neutral-500 hover:text-primary rounded"
+                      aria-label={`Remove ${search} from recent searches`}
+                      title="Remove search"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <button
               type="submit"
               className="absolute right-2 top-1/2 -translate-y-1/2

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { storageSettingsApi, extractorApi, youtubeApi, historyApi, watchlistApi, playlistApi, subscriptionApi, feedApi, downloadApi } from '../api/client';
 
 export function useStorageSettings() {
@@ -13,7 +13,10 @@ export function useUpdateStorageSettings() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: storageSettingsApi.update,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['storageSettings'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['storageSettings'] })
+      qc.invalidateQueries({ queryKey: ['trending'] })
+    },
   })
 }
 
@@ -147,6 +150,24 @@ export function usePlaylists() {
   })
 }
 
+export function usePlaylistMembership(playlistIds: number[], videoId: string) {
+  const results = useQueries({
+    queries: playlistIds.map(playlistId => ({
+      queryKey: ['playlist', playlistId],
+      queryFn: () => playlistApi.getById(playlistId),
+      enabled: !!videoId,
+    })),
+  })
+
+  return new Set(
+    results.flatMap((result, index) =>
+      result.data?.videos.some(video => video.videoId === videoId)
+        ? [playlistIds[index]]
+        : []
+    )
+  )
+}
+
 export function usePlaylist(id: number) {
   return useQuery({
     queryKey: ['playlist', id],
@@ -176,10 +197,22 @@ export function useAddVideoToPlaylist() {
   return useMutation({
     mutationFn: ({ playlistId, data }: {
       playlistId: number
-      data: { videoId: string; title: string; uploader: string; thumbnailUrl: string; duration: number }
+      data: { videoId: string; title: string; uploader: string; thumbnailUrl: string; duration: number; url?: string }
     }) => playlistApi.addVideo(playlistId, data),
     onSuccess: (_data, variables) =>
       qc.invalidateQueries({ queryKey: ['playlist', variables.playlistId] }),
+  })
+}
+
+export function useRemoveVideoFromPlaylist() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ playlistId, videoItemId }: { playlistId: number; videoItemId: number }) =>
+      playlistApi.removeVideo(playlistId, videoItemId),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['playlist', variables.playlistId] })
+      qc.invalidateQueries({ queryKey: ['playlists'] })
+    },
   })
 }
 

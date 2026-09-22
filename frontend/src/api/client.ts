@@ -222,7 +222,11 @@ export const downloadApi = {
 
 export const storageSettingsApi = {
   /** Get current storage paths */
-  get: () => api.get<{ downloadsDir: string; dataDir: string }>('/settings/storage').then(r => r.data),
+  get: () => api.get<{
+    downloadsDir: string
+    dataDir: string
+    trendingCountry?: string
+  }>('/settings/storage').then(r => r.data),
   update: (payload: { downloadsDir?: string; dataDir?: string; trendingCountry?: string }) =>
     api.post('/settings/storage', payload),
 };
