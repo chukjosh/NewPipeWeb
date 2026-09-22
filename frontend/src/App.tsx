@@ -4,10 +4,10 @@
  * Root application component. Sets up:
  * - React Router with all page routes
  * - Global layout (Navbar + Sidebar + main content area)
- * - Theme class on the root div (dark/light)
+ * - Theme class on the document root (dark/light)
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useAppStore } from './store/useAppStore'
 import Navbar        from './components/layout/Navbar'
@@ -31,11 +31,13 @@ export default function App() {
   const theme = useAppStore(s => s.theme)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
+
   return (
-    // Apply theme class to root — Tailwind dark mode uses this
-    <div className={theme}>
-      <BrowserRouter>
-        <div className="flex flex-col h-screen bg-neutral-950 text-white overflow-hidden">
+    <BrowserRouter>
+      <div className="flex flex-col h-screen bg-surface text-primary overflow-hidden">
 
           {/* Top navigation bar */}
           <Navbar onToggleSidebar={() => setSidebarOpen(open => !open)} />
@@ -64,8 +66,7 @@ export default function App() {
               </Routes>
             </main>
           </div>
-        </div>
-      </BrowserRouter>
-    </div>
+      </div>
+    </BrowserRouter>
   )
 }

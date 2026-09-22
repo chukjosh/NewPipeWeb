@@ -66,6 +66,7 @@ interface AppState {
   // ─── Recent searches ────────────────────────────
   recentSearches: string[]
   addRecentSearch: (query: string) => void
+  removeRecentSearch: (query: string) => void
   clearRecentSearches: () => void
 }
 
@@ -145,6 +146,10 @@ export const useAppStore = create<AppState>()(
             query,
             ...state.recentSearches.filter((q) => q !== query),
           ].slice(0, 10), // keep last 10 searches
+        })),
+      removeRecentSearch: (query) =>
+        set((state) => ({
+          recentSearches: state.recentSearches.filter((q) => q !== query),
         })),
       clearRecentSearches: () => set({ recentSearches: [] }),
     }),
