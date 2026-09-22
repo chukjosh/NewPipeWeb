@@ -34,7 +34,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       'text-sm font-medium transition-colors duration-150',
       isActive
         ? 'bg-red-600 text-white'
-        : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'
+        : 'text-neutral-400 hover:bg-neutral-800 hover:text-primary'
     )
 
   return (

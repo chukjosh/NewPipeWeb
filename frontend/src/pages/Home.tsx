@@ -46,7 +46,7 @@ export default function Home() {
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors
                 ${activeService === service.id
                   ? 'bg-red-600 text-white'
-                  : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-white'
+                  : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-primary'
                 }`}
             >
               {service.name}

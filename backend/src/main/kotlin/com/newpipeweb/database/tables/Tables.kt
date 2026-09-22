@@ -6,6 +6,7 @@ import org.jetbrains.exposed.sql.javatime.datetime
 object HistoryTable : Table("history") {
     val id = integer("id").autoIncrement()
     val videoId = varchar("video_id", 500)
+    val url = varchar("url", 2000).default("")
     val title = varchar("title", 500)
     val uploader = varchar("uploader", 500)
     val thumbnailUrl = varchar("thumbnail_url", 2000)
@@ -38,6 +39,7 @@ object PlaylistItemsTable : Table("playlist_items") {
     val id = integer("id").autoIncrement()
     val playlistId = integer("playlist_id").references(PlaylistsTable.id)
     val videoId = varchar("video_id", 500)
+    val url = varchar("url", 2000).default("")
     val title = varchar("title", 500)
     val uploader = varchar("uploader", 500)
     val thumbnailUrl = varchar("thumbnail_url", 2000)

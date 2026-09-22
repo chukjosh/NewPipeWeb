@@ -82,6 +82,8 @@ export default function Watch() {
   const [useHls, setUseHls] = useState(false)
   const [hlsSourceUrl, setHlsSourceUrl] = useState<string | null>(null)
   const [selectedSubtitle, setSelectedSubtitle] = useState<SubtitleTrack | null>(null)
+  const [directPlaybackFallback, setDirectPlaybackFallback] = useState(false)
+  const [mediaError, setMediaError] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [showPlaylistModal, setShowPlaylistModal] = useState(false)
   const [isPiP, setIsPiP] = useState(false)
@@ -102,6 +104,12 @@ export default function Watch() {
   }, [useHls, hlsSourceUrl, selectedStream?.url])
 
   const playbackUrl = playbackSourceUrl ? proxyMediaUrl(playbackSourceUrl, stream?.title) : ''
+  const effectivePlaybackUrl = directPlaybackFallback ? playbackSourceUrl : playbackUrl
+
+  useEffect(() => {
+    setDirectPlaybackFallback(false)
+    setMediaError(false)
+  }, [playbackUrl])
 
   // ─────────────────────────────────────────────────────────
   // On stream load: pick best quality stream + restore resume position
@@ -167,7 +175,7 @@ export default function Watch() {
     if (!videoRef.current) return
     videoRef.current.volume = volume
     videoRef.current.playbackRate = playbackRate
-  }, [playbackUrl])
+  }, [playbackUrl, volume, playbackRate])
 
   // ─────────────────────────────────────────────────────────
   // Add to history when video first loads
@@ -360,11 +368,11 @@ export default function Watch() {
 
         {/* ── Video player ──────────────────────────────── */}
         <div className="aspect-video bg-black rounded-xl overflow-hidden relative">
-          {playbackUrl ? (
+          {effectivePlaybackUrl ? (
             <video
               ref={videoRef}
-              key={playbackUrl}
-              src={useHls ? undefined : playbackUrl}
+              key={effectivePlaybackUrl}
+              src={useHls ? undefined : effectivePlaybackUrl}
               controls
               autoPlay
               playsInline
@@ -372,6 +380,13 @@ export default function Watch() {
               onTimeUpdate={handleTimeUpdate}
               onVolumeChange={handleVolumeChange}
               onRateChange={handleRateChange}
+              onError={() => {
+                if (!useHls && !directPlaybackFallback && playbackSourceUrl) {
+                  setDirectPlaybackFallback(true)
+                } else {
+                  setMediaError(true)
+                }
+              }}
             >
               {selectedSubtitle && subtitlesEnabled && !useHls && (
                 <track
@@ -387,6 +402,12 @@ export default function Watch() {
           ) : (
             <div className="flex items-center justify-center h-full text-neutral-400">
               No playable stream found
+            </div>
+          )}
+
+          {mediaError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/70 p-4 text-center text-sm text-white">
+              This video could not be played. Try selecting another quality or retrying the page.
             </div>
           )}
 
@@ -507,7 +528,7 @@ export default function Watch() {
             {/* Channel link */}
             <Link
               to={`/channel?url=${encodeURIComponent(stream.uploaderUrl)}`}
-              className="text-sm text-neutral-300 hover:text-white transition-colors font-medium"
+              className="text-sm text-neutral-300 hover:text-primary transition-colors font-medium"
             >
               {stream.uploader}
             </Link>
@@ -623,13 +644,14 @@ export default function Watch() {
       </div>
 
       {/* ── Add to playlist modal (portal-style overlay) ──── */}
-      {showPlaylistModal && stream && id && (
+      {showPlaylistModal && stream && contentKey && (
         <AddToPlaylistModal
-          videoId={id}
+          videoId={contentKey}
           title={stream.title}
           uploader={stream.uploader}
           thumbnailUrl={stream.thumbnailUrl}
           duration={stream.duration}
+          url={contentUrl}
           onClose={() => setShowPlaylistModal(false)}
         />
       )}

@@ -55,7 +55,11 @@ export default function VideoCard({ video }: VideoCardProps) {
           alt={video.title}
           className="w-full h-full object-cover"
           loading="lazy"
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+          onError={e => {
+            const image = e.currentTarget
+            image.onerror = null
+            image.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 9"%3E%3Crect width="16" height="9" fill="%23262626"/%3E%3Cpath d="M5 3.5h6v2H5z" fill="%23525252"/%3E%3C/svg%3E'
+          }}
         />
 
         {/* Duration badge — bottom right */}
@@ -80,7 +84,7 @@ export default function VideoCard({ video }: VideoCardProps) {
 
       {/* Info */}
       <div className="p-3">
-        <h3 className="text-sm font-medium line-clamp-2 text-white
+        <h3 className="text-sm font-medium line-clamp-2 text-primary
                        group-hover:text-red-400 transition-colors leading-snug mb-1">
           {video.title}
         </h3>

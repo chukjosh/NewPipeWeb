@@ -156,7 +156,7 @@ export default function Downloads() {
               )}
               {dl.status === 'COMPLETED' && (
                 <a href={downloadApi.getFileUrl(dl.id)}
-                  className="p-2 hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-white transition-colors"
+                    className="p-2 hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-primary transition-colors"
                   download title="Save file">
                   <Download size={16} />
                 </a>
@@ -180,7 +180,7 @@ export default function Downloads() {
                 id={`delete-download-${dl.id}`}
                 onClick={() => remove.mutate(dl.id)}
                 disabled={remove.isPending}
-                className="p-2 hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="p-2 hover:bg-neutral-700 rounded-lg text-neutral-400 hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 title="Remove download"
                 aria-label={`Remove download: ${dl.title}`}>
                 <Trash2 size={16} />

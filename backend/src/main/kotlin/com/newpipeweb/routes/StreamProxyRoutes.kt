@@ -10,6 +10,7 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.utils.io.*
+import kotlinx.coroutines.CancellationException
 import java.net.InetAddress
 import java.net.URI
 
@@ -46,7 +47,7 @@ fun Route.streamProxyRoutes() {
         val rangeHeader = call.request.headers[HttpHeaders.Range]
 
         try {
-            proxyClient.prepareGet(rawUrl) {
+            val upstream = proxyClient.prepareGet(rawUrl) {
                 headers {
                     append(HttpHeaders.UserAgent, PROXY_USER_AGENT)
                     rangeHeader?.let { append(HttpHeaders.Range, it) }
@@ -59,56 +60,57 @@ fun Route.streamProxyRoutes() {
                     append("Referer", "https://soundcloud.com/")
                     append("Origin", "https://soundcloud.com")
                 }
-            }.execute { upstream ->
-                val contentType = upstream.headers[HttpHeaders.ContentType]
+            }.execute()
+
+            val body = upstream.bodyAsChannel()
+            val contentType = upstream.headers[HttpHeaders.ContentType]
                     ?.let { runCatching { ContentType.parse(it) }.getOrNull() }
                     ?: ContentType.Application.OctetStream
 
-                val upstreamAcceptRanges = upstream.headers[HttpHeaders.AcceptRanges]
-                val upstreamContentRange = upstream.headers[HttpHeaders.ContentRange]
-                val titleParam = call.parameters["title"]
+            val upstreamAcceptRanges = upstream.headers[HttpHeaders.AcceptRanges]
+            val upstreamContentRange = upstream.headers[HttpHeaders.ContentRange]
+            val titleParam = call.parameters["title"]
 
-                call.respond(object : OutgoingContent.WriteChannelContent() {
-                    override val status: HttpStatusCode? = upstream.status
-                    override val contentType: ContentType = contentType
-                    override val contentLength: Long? = upstream.contentLength()
+            call.respond(object : OutgoingContent.WriteChannelContent() {
+                override val status: HttpStatusCode? = upstream.status
+                override val contentType: ContentType = contentType
+                override val contentLength: Long? = upstream.contentLength()
 
-                    override val headers: Headers = Headers.build {
-                        if (titleParam != null && titleParam.isNotBlank()) {
-                            val ext = contentType.contentSubtype.takeIf { it.isNotBlank() } ?: "mp4"
-                            val safeTitle = titleParam.replace(Regex("[^a-zA-Z0-9._-]"), "_").take(100)
-                            append(HttpHeaders.ContentDisposition, "inline; filename=\"$safeTitle.$ext\"")
-                        }
-                        if (upstreamAcceptRanges != null) {
-                            append(HttpHeaders.AcceptRanges, upstreamAcceptRanges)
-                        } else {
-                            append(HttpHeaders.AcceptRanges, "bytes")
-                        }
-                        if (upstreamContentRange != null) {
-                            append(HttpHeaders.ContentRange, upstreamContentRange)
-                        }
+                override val headers: Headers = Headers.build {
+                    if (titleParam != null && titleParam.isNotBlank()) {
+                        val ext = contentType.contentSubtype.takeIf { it.isNotBlank() } ?: "mp4"
+                        val safeTitle = titleParam.replace(Regex("[^a-zA-Z0-9._-]"), "_").take(100)
+                        append(HttpHeaders.ContentDisposition, "inline; filename=\"$safeTitle.$ext\"")
                     }
-
-                    override suspend fun writeTo(channel: ByteWriteChannel) {
-                        try {
-                            val body = upstream.bodyAsChannel()
-                            val buffer = ByteArray(8192)
-                            while (!body.isClosedForRead) {
-                                val read = body.readAvailable(buffer, 0, buffer.size)
-                                if (read <= 0) break
-                                channel.writeFully(buffer, 0, read)
-                                channel.flush()
-                            }
-                        } catch (e: Exception) {
-                            // Response is already committed — calling call.respond() here
-                            // would throw "Cannot write to a channel". Close the write
-                            // channel with the cause so the client gets a clean EOF/reset.
-                            println("[ERROR] Proxy stream interrupted for $rawUrl: ${e.message}")
-                            channel.close(e)
-                        }
+                    append(HttpHeaders.AcceptRanges, upstreamAcceptRanges ?: "bytes")
+                    if (upstreamContentRange != null) {
+                        append(HttpHeaders.ContentRange, upstreamContentRange)
                     }
-                })
-            }
+                }
+
+                override suspend fun writeTo(channel: ByteWriteChannel) {
+                    try {
+                        val buffer = ByteArray(8192)
+                        while (!body.isClosedForRead) {
+                            val read = body.readAvailable(buffer, 0, buffer.size)
+                            if (read <= 0) break
+                            channel.writeFully(buffer, 0, read)
+                            channel.flush()
+                        }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        // The browser can cancel a range request or switch quality
+                        // while this coroutine is writing. A closed response channel
+                        // is an expected client disconnect, not an upstream failure.
+                        if (channel.isClosedForWrite) return
+                        println("[ERROR] Proxy stream interrupted for $rawUrl: ${e.message}")
+                        channel.close(e)
+                    }
+                }
+            })
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             println("[ERROR] Proxy failed for $rawUrl: ${e.message}")
             call.respond(
