@@ -6,6 +6,13 @@ import io.ktor.server.plugins.cors.routing.*
 import java.net.InetAddress
 
 fun Application.configureCORS() {
+    val allowedOrigins = System.getenv("ALLOWED_ORIGINS")
+        ?.split(",")
+        ?.map(String::trim)
+        ?.filter(String::isNotEmpty)
+        ?.toSet()
+        ?: emptySet()
+
     install(CORS) {
         // Allow requests from the React frontend
         allowHost("localhost:5173")   // Vite dev server
@@ -16,7 +23,7 @@ fun Application.configureCORS() {
         // Allow requests from any RFC-1918 private-network IP
         // (covers LAN access via 10.x, 172.16–31.x, 192.168.x)
         allowOrigins { origin ->
-            isPrivateNetworkOrigin(origin)
+            origin in allowedOrigins || isPrivateNetworkOrigin(origin)
         }
 
         // Allow all headers and methods needed by the frontend
