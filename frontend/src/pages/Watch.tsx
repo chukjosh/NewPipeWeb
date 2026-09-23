@@ -335,7 +335,9 @@ export default function Watch() {
   // ─────────────────────────────────────────────────────────
   // Subscribe / unsubscribe
   // ─────────────────────────────────────────────────────────
-  const sub = subscriptions?.find(s => s.channelId === contentKey)
+  const sub = subscriptions?.find(s =>
+    s.channelId === stream?.uploaderUrl || s.channelUrl === stream?.uploaderUrl
+  )
 
   const handleSubscribeToggle = () => {
     if (!stream || !stream.uploaderUrl) return
