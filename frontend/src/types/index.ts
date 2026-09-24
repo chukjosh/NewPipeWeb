@@ -40,6 +40,7 @@ export interface VideoModel {
   duration: number
   viewCount: number
   uploadDate: string
+  uploadDateTimestamp?: number | null
   thumbnailUrl: string
   description?: string
   isLive: boolean

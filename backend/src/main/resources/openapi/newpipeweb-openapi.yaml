@@ -455,6 +455,39 @@ paths:
           description: Subscription added or already existed.
         '201':
           description: New subscription created.
+    delete:
+      tags: [Local Data]
+      summary: Delete multiple subscriptions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionDeleteRequest'
+      responses:
+        '200':
+          description: Number of deleted subscriptions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionDeleteSummary'
+
+  /subscriptions/{id}:
+    delete:
+      tags: [Local Data]
+      summary: Delete one subscription
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '204':
+          description: Subscription deleted.
+        '400':
+          description: Invalid subscription ID.
 
   /subscriptions/export:
     get:
@@ -467,6 +500,13 @@ paths:
           schema:
             type: string
             enum: [json, txt, text]
+        - in: query
+          name: overwrite
+          required: false
+          description: Replace all existing subscriptions before importing.
+          schema:
+            type: boolean
+            default: false
             default: json
       responses:
         '200':
@@ -740,6 +780,10 @@ components:
           format: int64
         uploadDate:
           type: string
+        uploadDateTimestamp:
+          type: integer
+          format: int64
+          nullable: true
         thumbnailUrl:
           type: string
         description:
@@ -1018,6 +1062,24 @@ components:
         service:
           type: string
 
+    SubscriptionDeleteRequest:
+      type: object
+      required: [ids]
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+            format: int32
+
+    SubscriptionDeleteSummary:
+      type: object
+      required: [deleted]
+      properties:
+        deleted:
+          type: integer
+          format: int32
+
     DownloadModel:
       type: object
       required: [id, videoId, title, uploader, thumbnailUrl, filePath, fileSize, downloadedBytes, status, quality, isAudioOnly, createdAt, service]
@@ -1255,12 +1317,18 @@ components:
 
     SubscriptionImportSummary:
       type: object
-      required: [added, alreadySubscribed]
+      required: [added, alreadySubscribed, updated, removed]
       properties:
         added:
           type: integer
           format: int32
         alreadySubscribed:
+          type: integer
+          format: int32
+        updated:
+          type: integer
+          format: int32
+        removed:
           type: integer
           format: int32
 
