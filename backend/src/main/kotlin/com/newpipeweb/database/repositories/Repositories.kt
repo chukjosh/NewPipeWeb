@@ -395,26 +395,65 @@ object SubscriptionRepository {
         true
     }
 
-    fun import(requests: List<SubscribeRequest>): SubscriptionImportSummary = transaction {
+    fun import(requests: List<SubscribeRequest>, overwrite: Boolean = false): SubscriptionImportSummary = transaction {
         var added = 0
         var alreadySubscribed = 0
+        var updated = 0
+        var removed = 0
 
-        requests.forEach { request ->
-            if (subscribe(request)) {
+        if (overwrite) {
+            removed = SubscriptionsTable.deleteAll()
+        }
+
+        requests.distinctBy { it.channelId to it.channelUrl }.forEach { request ->
+            val existing = SubscriptionsTable
+                .selectAll()
+                .where {
+                    (SubscriptionsTable.channelId eq request.channelId) or
+                        (SubscriptionsTable.channelUrl eq request.channelUrl)
+                }
+                .firstOrNull()
+
+            if (existing == null) {
+                SubscriptionsTable.insert {
+                    it[channelId] = request.channelId
+                    it[channelName] = request.channelName
+                    it[channelUrl] = request.channelUrl
+                    it[avatarUrl] = request.avatarUrl
+                    it[subscribedAt] = LocalDateTime.now()
+                }
                 added += 1
             } else {
-                alreadySubscribed += 1
+                if (overwrite) {
+                    SubscriptionsTable.update({ SubscriptionsTable.id eq existing[SubscriptionsTable.id] }) {
+                        it[channelId] = request.channelId
+                        it[channelName] = request.channelName
+                        it[channelUrl] = request.channelUrl
+                        it[avatarUrl] = request.avatarUrl
+                    }
+                    updated += 1
+                } else {
+                    alreadySubscribed += 1
+                }
             }
         }
 
         SubscriptionImportSummary(
             added = added,
-            alreadySubscribed = alreadySubscribed
+            alreadySubscribed = alreadySubscribed,
+            updated = updated,
+            removed = removed
         )
     }
 
     fun unsubscribe(id: Int) = transaction {
         SubscriptionsTable.deleteWhere { SubscriptionsTable.id eq id }
+    }
+
+    fun unsubscribeMany(ids: List<Int>): Int = transaction {
+        ids.distinct().sumOf { id ->
+            SubscriptionsTable.deleteWhere { SubscriptionsTable.id eq id }
+        }
     }
 
     fun getAllChannelIds(): List<String> = transaction {

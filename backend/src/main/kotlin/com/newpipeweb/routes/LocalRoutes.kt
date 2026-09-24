@@ -188,6 +188,7 @@ fun Route.subscriptionRoutes() {
             val raw = call.receiveText()
             val requestedFormat = call.request.queryParameters["format"]?.trim()?.lowercase()
             val format = requestedFormat ?: detectImportFormat(raw, call.request.header(HttpHeaders.ContentType))
+            val overwrite = call.request.queryParameters["overwrite"]?.toBoolean() ?: false
 
             val requests = try {
                 when (format) {
@@ -214,8 +215,13 @@ fun Route.subscriptionRoutes() {
                 return@post call.respond(HttpStatusCode.BadRequest, "Invalid import payload: ${e.message}")
             }
 
-            val summary = SubscriptionRepository.import(requests)
+            val summary = SubscriptionRepository.import(requests, overwrite)
             call.respond(summary)
+        }
+
+        delete {
+            val request = call.receive<SubscriptionDeleteRequest>()
+            call.respond(SubscriptionDeleteSummary(SubscriptionRepository.unsubscribeMany(request.ids)))
         }
 
         delete("/{id}") {
@@ -539,7 +545,7 @@ fun Route.feedRoutes() {
                     emptyList()
                 }
             }
-            .sortedByDescending { it.uploadDate }
+            .sortedByDescending { it.uploadDateTimestamp ?: Long.MIN_VALUE }
 
         call.respond(feedVideos)
     }

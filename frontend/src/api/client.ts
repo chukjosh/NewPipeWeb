@@ -216,8 +216,8 @@ export const subscriptionApi = {
     return (response.data as JsonEnvelope<SubscriptionModel>).data as SubscriptionModel[]
   },
 
-  import: (format: 'json' | 'txt', payload: string) =>
-    api.post<{ added: number; alreadySubscribed: number }>(`/subscriptions/import?format=${format}`, payload, {
+  import: (format: 'json' | 'txt', payload: string, overwrite = false) =>
+    api.post<{ added: number; alreadySubscribed: number; updated: number; removed: number }>(`/subscriptions/import?format=${format}&overwrite=${overwrite}`, payload, {
       headers: {
         'Content-Type': format === 'json' ? 'application/json' : 'text/plain',
       },
@@ -230,6 +230,9 @@ export const subscriptionApi = {
 
   unsubscribe: (id: number) =>
     api.delete(`/subscriptions/${id}`),
+
+  unsubscribeMany: (ids: number[]) =>
+    api.delete<{ deleted: number }>('/subscriptions', { data: { ids } }).then(r => r.data),
 }
 
 export const appDataApi = {

@@ -29,6 +29,7 @@ data class VideoModel(
     val duration: Long,           // seconds; -1 for live streams
     val viewCount: Long,
     val uploadDate: String,
+    val uploadDateTimestamp: Long? = null,
     val thumbnailUrl: String,
     val description: String = "",
     val isLive: Boolean = false,
@@ -230,7 +231,19 @@ data class ExportEnvelope<T>(
 @Serializable
 data class SubscriptionImportSummary(
     val added: Int,
-    val alreadySubscribed: Int
+    val alreadySubscribed: Int,
+    val updated: Int = 0,
+    val removed: Int = 0
+)
+
+@Serializable
+data class SubscriptionDeleteRequest(
+    val ids: List<Int>
+)
+
+@Serializable
+data class SubscriptionDeleteSummary(
+    val deleted: Int
 )
 
 @Serializable
