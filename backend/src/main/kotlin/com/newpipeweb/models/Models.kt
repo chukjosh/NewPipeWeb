@@ -220,6 +220,12 @@ data class SubscriptionModel(
     val service: String = "youtube"
 )
 
+@Serializable
+data class SubscriptionImportSummary(
+    val added: Int,
+    val alreadySubscribed: Int
+)
+
 // ─────────────────────────────────────────────
 // Download model
 // ─────────────────────────────────────────────

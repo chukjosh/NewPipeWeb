@@ -167,6 +167,21 @@ export const subscriptionApi = {
   getAll: () =>
     api.get<SubscriptionModel[]>('/subscriptions').then(r => r.data),
 
+  export: async (format: 'json' | 'txt' = 'json') => {
+    const response = await api.get(`/subscriptions/export`, {
+      params: { format },
+      responseType: format === 'txt' ? 'text' : 'json',
+    })
+    return response.data as SubscriptionModel[] | string
+  },
+
+  import: (format: 'json' | 'txt', payload: string) =>
+    api.post<{ added: number; alreadySubscribed: number }>(`/subscriptions/import?format=${format}`, payload, {
+      headers: {
+        'Content-Type': format === 'json' ? 'application/json' : 'text/plain',
+      },
+    }).then(r => r.data),
+
   subscribe: (data: {
     channelId: string; channelName: string
     channelUrl: string; avatarUrl: string; service?: string
