@@ -500,13 +500,6 @@ paths:
           schema:
             type: string
             enum: [json, txt, text]
-        - in: query
-          name: overwrite
-          required: false
-          description: Replace all existing subscriptions before importing.
-          schema:
-            type: boolean
-            default: false
             default: json
       responses:
         '200':
@@ -530,6 +523,13 @@ paths:
           schema:
             type: string
             enum: [json, txt, text]
+        - in: query
+          name: overwrite
+          required: false
+          description: Replace all existing subscriptions before importing.
+          schema:
+            type: boolean
+            default: false
       requestBody:
         required: true
         content:
