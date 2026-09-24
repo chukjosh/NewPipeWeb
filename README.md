@@ -1,5 +1,3 @@
-
-
 # NewPipeWeb
 
 A full-featured, self-hosted frontend for YouTube, SoundCloud, PeerTube and more, built on top of [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor).
@@ -18,6 +16,9 @@ No Google account required. No ads. No tracking.
 1. Fork the repo and create your branch from `dev`.
 2. Make your changes and open a pull request back into `dev`.
 3. Once reviewed and tested, changes get merged from `dev` into `main`.
+
+See the [CONTRIBUTING guide](./CONTRIBUTING.md) for setup, build checks, and code style before opening a PR.
+
 ---
 
 ## Table of Contents
@@ -28,13 +29,14 @@ No Google account required. No ads. No tracking.
 4. [Quick Start](#quick-start)
 5. [Running in Development](#running-in-development)
 6. [Running with Docker](#running-with-docker)
-7. [Desktop App (Tauri)](#desktop-app-tauri)
-8. [User Guide](#user-guide)
-9. [Settings Reference](#settings-reference)
-10. [SponsorBlock](#sponsorblock)
-11. [API Reference](#api-reference)
-12. [Project Structure](#project-structure)
-13. [Troubleshooting](#troubleshooting)
+7. [Configuration](#configuration)
+8. [Desktop App (Tauri)](#desktop-app-tauri)
+9. [User Guide](#user-guide)
+10. [Settings Reference](#settings-reference)
+11. [SponsorBlock](#sponsorblock)
+12. [API Reference](#api-reference)
+13. [Project Structure](#project-structure)
+14. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -55,6 +57,7 @@ No Google account required. No ads. No tracking.
 | 📚 Playlists | Create and manage local playlists |
 | 🕐 History | Full watch history with resume positions |
 | ⬇️ Downloads | Download video or audio to your server |
+| 📤 Export / Import | Back up or transfer subscriptions, playlists, history and watchlist |
 | ⏭️ SponsorBlock | Opt-in automatic sponsor segment skipping |
 | 🌙 Dark / Light | Toggle between dark and light theme |
 | 🐳 Docker | One command to run the full stack |
@@ -113,6 +116,7 @@ Switch services using the dropdown in the search bar. The service selector only 
 | Ktor Call Logging | 2.3.12 | Request/response logging |
 | Ktor Status Pages | 2.3.12 | Error handling |
 | Ktor Client CIO | 2.3.12 | HTTP client for file streaming |
+| Ktor Server Swagger | 2.3.12 | Interactive API docs (`/docs`) |
 
 **Extraction & Parsing:**
 | Library | Version | Purpose |
@@ -337,6 +341,29 @@ These persist across container restarts. Back them up to keep your data.
 
 ---
 
+## Configuration
+
+The backend reads configuration from environment variables. Copy `.env.example` to `.env`
+in the project root and adjust as needed — `.env` is only read at container start,
+so re-run `docker compose up -d` after changing it (a plain `restart` will not pick up changes).
+
+| Variable | Required | Description |
+|---|---|---|
+| `ALLOWED_ORIGINS` | No | Comma-separated list of full origins (e.g. `https://my.fqdn.tld`) to trust for CORS, in addition to `localhost` and private LAN IPs (`10.x`, `172.16–31.x`, `192.168.x`), which are always allowed. Needed if you access the app through a reverse proxy on a public domain. |
+| `DATA_DIR` | No | Directory for the SQLite database. Defaults to `/app/data` in Docker. |
+| `DOWNLOADS_DIR` | No | Directory for downloaded files. Defaults to `/app/downloads` in Docker. |
+
+**Example `.env`:**
+```env
+ALLOWED_ORIGINS=https://my.fqdn.tld
+```
+
+By default (no `.env` needed), the app only trusts `localhost` and private network IPs —
+hostnames are never resolved for CORS checks, so a domain must be explicitly added via
+`ALLOWED_ORIGINS` to avoid being rejected.
+
+---
+
 ## Desktop App (Tauri)
 
 The desktop app wraps the web frontend in a native window using Tauri.
@@ -462,6 +489,9 @@ sorted by upload date.
 
 The **Subscriptions** page lists all channels you've subscribed to.
 Click a channel name to go to its page, or click **Unsubscribe** to remove it.
+Use **Export** / **Import** on this page to back up your subscriptions as JSON
+or as a plain text list of channel URLs (one per line), or to bring in a list
+generated elsewhere.
 
 ### Watchlist
 
@@ -521,6 +551,12 @@ section. Click again to collapse it.
 
 Pinned comments are marked 📌. Comments hearted by the creator are marked ❤️.
 
+### Export / Import
+
+Subscriptions, playlists, history and watchlist can each be exported and imported from
+their own page, or all at once from **Settings → Export / Import All**. See
+[API Reference](#api-reference) for the underlying endpoints and formats.
+
 ---
 
 ## Settings Reference
@@ -565,6 +601,13 @@ See [SponsorBlock categories](https://wiki.sponsor.ajay.app/w/Segment_Categories
 | Clear history | Deletes all watch history from the database |
 | Clear recent searches | Clears the local search history shown in the search bar |
 
+### Export / Import All
+
+| Action | Description |
+|---|---|
+| Export All | Downloads a single JSON file with subscriptions, playlists, history and watchlist |
+| Import All | Restores from a previously exported JSON file |
+
 ---
 
 ## SponsorBlock
@@ -604,6 +647,9 @@ If you notice incorrect segments or want to contribute timestamps, install the
 All endpoints are served by the Ktor backend on port 8080.
 In Docker, the frontend nginx config proxies `/api/*` to the backend.
 
+An interactive Swagger UI covering every endpoint below is available at **`/docs`**
+once the backend is running.
+
 ### YouTube / Extraction endpoints
 
 | Method | Path | Description |
@@ -623,6 +669,8 @@ In Docker, the frontend nginx config proxies `/api/*` to the backend.
 | POST | `/history` | Add or update a history entry |
 | DELETE | `/history` | Clear all history |
 | DELETE | `/history/{id}` | Remove a single entry |
+| GET | `/history/export` | Export history as JSON |
+| POST | `/history/import` | Import history from JSON |
 
 **POST /history body:**
 ```json
@@ -643,6 +691,8 @@ In Docker, the frontend nginx config proxies `/api/*` to the backend.
 | GET | `/watchlist` | Get watchlist |
 | POST | `/watchlist` | Add a video |
 | DELETE | `/watchlist/{id}` | Remove a video |
+| GET | `/watchlist/export` | Export watchlist as JSON |
+| POST | `/watchlist/import` | Import watchlist from JSON |
 
 ### Playlists
 
@@ -654,6 +704,8 @@ In Docker, the frontend nginx config proxies `/api/*` to the backend.
 | DELETE | `/playlists/{id}` | Delete a playlist |
 | POST | `/playlists/{id}/videos` | Add a video to a playlist |
 | DELETE | `/playlists/{id}/videos/{videoItemId}` | Remove a video |
+| GET | `/playlists/export` | Export all playlists as JSON |
+| POST | `/playlists/import` | Import playlists from JSON |
 
 ### Subscriptions & Feed
 
@@ -663,6 +715,8 @@ In Docker, the frontend nginx config proxies `/api/*` to the backend.
 | POST | `/subscriptions` | Subscribe to a channel |
 | DELETE | `/subscriptions/{id}` | Unsubscribe |
 | GET | `/feed` | Latest videos from subscribed channels |
+| GET | `/subscriptions/export?format=json\|txt` | Export subscriptions as JSON or a plain text list of channel URLs |
+| POST | `/subscriptions/import` | Import subscriptions from JSON or plain text |
 
 ### Downloads
 
@@ -673,6 +727,24 @@ In Docker, the frontend nginx config proxies `/api/*` to the backend.
 | GET | `/downloads/{id}` | Get download status |
 | DELETE | `/downloads/{id}` | Delete download record + file |
 | GET | `/downloads/{id}/file` | Download the completed file |
+| POST | `/downloads/{id}/pause` | Pause an in-progress download |
+| POST | `/downloads/{id}/resume` | Resume a paused download |
+| POST | `/downloads/{id}/retry` | Retry a failed download |
+
+### Export / Import All
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/export` | Export subscriptions, playlists, history and watchlist as a single JSON file |
+| POST | `/import` | Import all categories from a combined JSON export |
+
+### System
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/health` | Health check |
+| GET | `/info` | Backend/version info |
+| GET | `/docs` | Interactive Swagger UI |
 
 ---
 
@@ -728,6 +800,8 @@ NewPipeWeb/
 ├── data/                            SQLite database (auto-created, git-ignored)
 ├── downloads/                       Downloaded files (auto-created, git-ignored)
 ├── docker-compose.yml
+├── .env.example                     Template for backend environment variables
+├── CONTRIBUTING.md
 └── README.md
 ```
 
@@ -764,6 +838,14 @@ for a newer version and update `build.gradle.kts`.
 - Open browser DevTools → Network tab and look for requests to `sponsor.ajay.app`
 - If requests return 404, the video has no community-submitted segments yet
 
+### CORS / 403 errors on API requests
+
+If requests to `/api/*` fail with `403` when accessing the app from anywhere other
+than `localhost` or a private LAN IP (e.g. through a reverse proxy on a public domain),
+add that origin to `ALLOWED_ORIGINS` in your `.env` file and restart the stack with
+`docker compose up -d` (not a plain `restart`, which won't reread `.env`).
+See [Configuration](#configuration).
+
 ### Docker issues
 
 **Backend container exits immediately**
@@ -779,6 +861,12 @@ Change the host port in `docker-compose.yml`:
 ports:
   - "8081:8080"   # host:container
 ```
+
+**`ERR_PNPM_IGNORED_BUILDS` during frontend build**
+Make sure `pnpm-workspace.yaml` is copied into the Docker build context (it must appear
+in the frontend Dockerfile's `COPY` step alongside `package.json` and `pnpm-lock.yaml`),
+and that `package.json` has a pinned `packageManager` field so Corepack installs a
+consistent pnpm version.
 
 ### Desktop app (Tauri)
 
