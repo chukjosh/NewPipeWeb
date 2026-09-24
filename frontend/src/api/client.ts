@@ -22,6 +22,15 @@ const api = axios.create({
   timeout: 30000,
 })
 
+type JsonEnvelope<T> = {
+  schemaVersion: number
+  type: string
+  data: T[]
+}
+
+const normalizePayload = <T>(type: string, payload: T[] | JsonEnvelope<T>) =>
+  Array.isArray(payload) ? { schemaVersion: 1, type, data: payload } : payload
+
 // ─────────────────────────────────────────────
 // Services — list supported platforms
 // ─────────────────────────────────────────────
@@ -103,6 +112,16 @@ export const historyApi = {
   getAll: () =>
     api.get<HistoryModel[]>('/history').then(r => r.data),
 
+  export: async () => {
+    const response = await api.get<JsonEnvelope<HistoryModel>>('/history/export')
+    return response.data.data
+  },
+
+  import: (payload: HistoryModel[] | JsonEnvelope<HistoryModel>) =>
+    api.post<{ added: number; updated: number; alreadyExisted: number }>('/history/import', normalizePayload('history', payload), {
+      headers: { 'Content-Type': 'application/json' },
+    }).then(r => r.data),
+
   add: (data: {
     videoId: string; title: string; uploader: string
     thumbnailUrl: string; duration: number
@@ -124,6 +143,16 @@ export const watchlistApi = {
   getAll: () =>
     api.get<WatchlistModel[]>('/watchlist').then(r => r.data),
 
+  export: async () => {
+    const response = await api.get<JsonEnvelope<WatchlistModel>>('/watchlist/export')
+    return response.data.data
+  },
+
+  import: (payload: WatchlistModel[] | JsonEnvelope<WatchlistModel>) =>
+    api.post<{ added: number; alreadyExisted: number }>('/watchlist/import', normalizePayload('watchlist', payload), {
+      headers: { 'Content-Type': 'application/json' },
+    }).then(r => r.data),
+
   add: (data: {
     videoId: string; title: string; uploader: string
     thumbnailUrl: string; duration: number; service?: string; url?: string
@@ -140,6 +169,16 @@ export const watchlistApi = {
 export const playlistApi = {
   getAll: () =>
     api.get<PlaylistModel[]>('/playlists').then(r => r.data),
+
+  export: async () => {
+    const response = await api.get<JsonEnvelope<PlaylistWithVideos>>('/playlists/export')
+    return response.data.data
+  },
+
+  import: (payload: PlaylistWithVideos[] | JsonEnvelope<PlaylistWithVideos>) =>
+    api.post<{ added: number; alreadyExisted: number }>('/playlists/import', normalizePayload('playlists', payload), {
+      headers: { 'Content-Type': 'application/json' },
+    }).then(r => r.data),
 
   getById: (id: number) =>
     api.get<PlaylistWithVideos>(`/playlists/${id}`).then(r => r.data),
@@ -168,11 +207,13 @@ export const subscriptionApi = {
     api.get<SubscriptionModel[]>('/subscriptions').then(r => r.data),
 
   export: async (format: 'json' | 'txt' = 'json') => {
-    const response = await api.get(`/subscriptions/export`, {
+    const response = await api.get<JsonEnvelope<SubscriptionModel> | string>(`/subscriptions/export`, {
       params: { format },
       responseType: format === 'txt' ? 'text' : 'json',
     })
-    return response.data as SubscriptionModel[] | string
+
+    if (format === 'txt') return response.data as string
+    return (response.data as JsonEnvelope<SubscriptionModel>).data as SubscriptionModel[]
   },
 
   import: (format: 'json' | 'txt', payload: string) =>
@@ -189,6 +230,14 @@ export const subscriptionApi = {
 
   unsubscribe: (id: number) =>
     api.delete(`/subscriptions/${id}`),
+}
+
+export const appDataApi = {
+  exportAll: async () =>
+    api.get<{ schemaVersion: number; subscriptions: SubscriptionModel[]; playlists: PlaylistWithVideos[]; history: HistoryModel[]; watchlist: WatchlistModel[] }>('/export').then(r => r.data),
+
+  importAll: (payload: Record<string, unknown>) =>
+    api.post('/import', payload, { headers: { 'Content-Type': 'application/json' } }).then(r => r.data),
 }
 
 // ─────────────────────────────────────────────

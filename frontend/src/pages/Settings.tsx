@@ -11,15 +11,17 @@
  * - Privacy (clear history, clear searches)
  */
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 // import { useNavigate } from 'react-router-dom' // Commented out to fix TS6133
-import { Trash2, SkipForward, Info, X } from 'lucide-react'
+import { Trash2, SkipForward, Info, X, Download, Upload } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   useAppStore,
   SPONSOR_CATEGORY_LABELS,
   type SponsorCategory,
 } from '../store/useAppStore'
 import { useClearHistory, useStorageSettings, useUpdateStorageSettings } from '../hooks'
+import { appDataApi } from '../api/client'
 
 /** All available SponsorBlock categories in display order */
 const ALL_CATEGORIES: SponsorCategory[] = [
@@ -42,6 +44,58 @@ const QUALITY_OPTIONS = ['2160p', '1440p', '1080p', '720p', '480p', '360p', '240
 export default function Settings() {
   // const navigate = useNavigate() // Commented out to fix TS6133
   const clearHistory = useClearHistory()
+  const queryClient = useQueryClient()
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [toast, setToast] = useState<{ message: string; kind: 'success' | 'error' } | null>(null)
+
+  useEffect(() => {
+    if (!toast) return
+    const timer = window.setTimeout(() => setToast(null), 5000)
+    return () => window.clearTimeout(timer)
+  }, [toast])
+
+  const showToast = (message: string, kind: 'success' | 'error' = 'success') => {
+    setToast({ message, kind })
+  }
+
+  const downloadJson = (fileName: string, payload: unknown) => {
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = fileName
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleExportAll = async () => {
+    try {
+      const payload = await appDataApi.exportAll()
+      downloadJson('newpipeweb-data-export.json', payload)
+      showToast('All data exported')
+    } catch {
+      showToast('Export failed', 'error')
+    }
+  }
+
+  const handleImportAll = async (event: any) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    try {
+      const payload = JSON.parse(await file.text())
+      const summary = await appDataApi.importAll(payload)
+      queryClient.invalidateQueries({ queryKey: ['history'] })
+      queryClient.invalidateQueries({ queryKey: ['watchlist'] })
+      queryClient.invalidateQueries({ queryKey: ['playlists'] })
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
+      showToast(`Imported: ${summary.subscriptions.added} subs · ${summary.playlists.added} playlists`, 'success')
+    } catch {
+      showToast('Import failed', 'error')
+    } finally {
+      event.target.value = ''
+    }
+  }
 
   // Pull persisted backend settings.
   const { data: storageSettings } = useStorageSettings()
@@ -78,6 +132,13 @@ export default function Settings() {
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-10">
       <h1 className="text-2xl font-bold">Settings</h1>
+
+      {toast && (
+        <div className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm shadow-sm ${toast.kind === 'success' ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-300'}`}>
+          <span>{toast.message}</span>
+          <button type="button" className="ml-4 font-bold opacity-80 hover:opacity-100" onClick={() => setToast(null)} aria-label="Close notification">×</button>
+        </div>
+      )}
 
       {/* ── Appearance ──────────────────────────────────── */}
       <section>
@@ -330,6 +391,33 @@ export default function Settings() {
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* ── Data backup ─────────────────────────────────── */}
+      <section>
+        <h2 className="text-lg font-semibold mb-4 text-neutral-200">Data Backup</h2>
+        <div className="bg-neutral-900 rounded-xl p-4 space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium">Export all local data</p>
+              <p className="text-xs text-neutral-400 mt-0.5">Subscriptions, playlists, history, and watchlist.</p>
+            </div>
+            <button onClick={handleExportAll} className="btn-secondary text-sm flex items-center gap-1.5">
+              <Download size={13} /> Export all
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium">Import all local data</p>
+              <p className="text-xs text-neutral-400 mt-0.5">Restore a previously exported backup file.</p>
+            </div>
+            <button onClick={() => fileInputRef.current?.click()} className="btn-secondary text-sm flex items-center gap-1.5">
+              <Upload size={13} /> Import all
+            </button>
+            <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleImportAll} />
+          </div>
         </div>
       </section>
 
