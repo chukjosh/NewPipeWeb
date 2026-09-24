@@ -2,6 +2,8 @@ package com.newpipeweb.routes
 
 import com.newpipeweb.database.repositories.*
 import com.newpipeweb.models.*
+import com.newpipeweb.services.ExtractorService
+import com.newpipeweb.services.SubscriptionImportParser
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
@@ -112,11 +114,59 @@ fun Route.subscriptionRoutes() {
         get {
             call.respond(SubscriptionRepository.getAll())
         }
+
+        get("/export") {
+            val format = call.request.queryParameters["format"]?.trim()?.lowercase() ?: "json"
+            when (format) {
+                "json" -> call.respond(SubscriptionRepository.getAll())
+                "txt", "text" -> call.respondText(
+                    SubscriptionRepository.exportText(),
+                    ContentType.Text.Plain
+                )
+                else -> call.respond(HttpStatusCode.BadRequest, "Unsupported export format: $format")
+            }
+        }
+
         post {
             val request = call.receive<SubscribeRequest>()
-            SubscriptionRepository.subscribe(request)
-            call.respond(HttpStatusCode.Created)
+            val created = SubscriptionRepository.subscribe(request)
+            call.respond(if (created) HttpStatusCode.Created else HttpStatusCode.OK)
         }
+
+        post("/import") {
+            val raw = call.receiveText()
+            val requestedFormat = call.request.queryParameters["format"]?.trim()?.lowercase()
+            val format = requestedFormat ?: detectImportFormat(raw, call.request.header(HttpHeaders.ContentType))
+
+            val requests = try {
+                when (format) {
+                    "json" -> SubscriptionImportParser.parse(raw, "json")
+                    "txt", "text" -> SubscriptionImportParser.parse(raw, "txt")
+                        .mapNotNull { request ->
+                            val url = request.channelUrl.trim()
+                            try {
+                                val channel = ExtractorService.getChannel(url)
+                                SubscribeRequest(
+                                    channelId = channel.id,
+                                    channelName = channel.name,
+                                    channelUrl = channel.url,
+                                    avatarUrl = channel.avatarUrl,
+                                    service = channel.service
+                                )
+                            } catch (_: Exception) {
+                                null
+                            }
+                        }
+                    else -> return@post call.respond(HttpStatusCode.BadRequest, "Unsupported import format: $format")
+                }
+            } catch (e: Exception) {
+                return@post call.respond(HttpStatusCode.BadRequest, "Invalid import payload: ${e.message}")
+            }
+
+            val summary = SubscriptionRepository.import(requests)
+            call.respond(summary)
+        }
+
         delete("/{id}") {
             val id = call.parameters["id"]?.toIntOrNull()
                 ?: return@delete call.respond(HttpStatusCode.BadRequest, "Invalid id")
@@ -124,6 +174,14 @@ fun Route.subscriptionRoutes() {
             call.respond(HttpStatusCode.NoContent)
         }
     }
+}
+
+private fun detectImportFormat(rawBody: String, contentType: String?): String? {
+    val normalizedContentType = contentType?.lowercase() ?: ""
+    if (normalizedContentType.contains("json")) return "json"
+    if (normalizedContentType.contains("text/plain") || normalizedContentType.contains("text")) return "txt"
+    if (rawBody.trimStart().startsWith("[")) return "json"
+    return "txt"
 }
 
 // ─────────────────────────────────────────────

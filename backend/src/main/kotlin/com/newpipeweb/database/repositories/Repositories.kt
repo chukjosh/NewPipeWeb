@@ -219,14 +219,49 @@ object SubscriptionRepository {
             }
     }
 
-    fun subscribe(request: SubscribeRequest) = transaction {
-        SubscriptionsTable.insertIgnore {
+    fun exportText(): String = getAll()
+        .joinToString(separator = "\n") { it.channelUrl.trim() }
+
+    fun subscribe(request: SubscribeRequest): Boolean = transaction {
+        val alreadyExists = SubscriptionsTable
+            .selectAll()
+            .where {
+                (SubscriptionsTable.channelId eq request.channelId) or
+                    (SubscriptionsTable.channelUrl eq request.channelUrl)
+            }
+            .count() > 0
+
+        if (alreadyExists) {
+            return@transaction false
+        }
+
+        SubscriptionsTable.insert {
             it[channelId] = request.channelId
             it[channelName] = request.channelName
             it[channelUrl] = request.channelUrl
             it[avatarUrl] = request.avatarUrl
             it[subscribedAt] = LocalDateTime.now()
         }
+
+        true
+    }
+
+    fun import(requests: List<SubscribeRequest>): SubscriptionImportSummary = transaction {
+        var added = 0
+        var alreadySubscribed = 0
+
+        requests.forEach { request ->
+            if (subscribe(request)) {
+                added += 1
+            } else {
+                alreadySubscribed += 1
+            }
+        }
+
+        SubscriptionImportSummary(
+            added = added,
+            alreadySubscribed = alreadySubscribed
+        )
     }
 
     fun unsubscribe(id: Int) = transaction {
