@@ -16,6 +16,10 @@ downloads/
 # ========================================
 backend/.gradle/
 backend/build/
+backend/.idea/
+backend/.vscode/
+backend/bin/
+backend/bin/*
 backend/out/
 backend/*.jar
 backend/*.war
