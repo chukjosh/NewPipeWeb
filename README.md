@@ -713,8 +713,13 @@ once the backend is running.
 |---|---|---|
 | GET | `/subscriptions` | List all subscriptions |
 | POST | `/subscriptions` | Subscribe to a channel |
+| DELETE | `/subscriptions` | Delete multiple subscriptions by ID |
 | DELETE | `/subscriptions/{id}` | Unsubscribe |
 | GET | `/feed` | Latest videos from subscribed channels |
+
+Subscription imports accept `overwrite=true` to replace the existing subscription
+list with the imported channels. Feed results can be viewed newest-first or
+oldest-first using the sort control on the Feed page.
 | GET | `/subscriptions/export?format=json\|txt` | Export subscriptions as JSON or a plain text list of channel URLs |
 | POST | `/subscriptions/import` | Import subscriptions from JSON or plain text |
 

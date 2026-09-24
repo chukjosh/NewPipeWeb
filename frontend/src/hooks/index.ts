@@ -243,6 +243,17 @@ export function useUnsubscribe() {
   })
 }
 
+export function useUnsubscribeMany() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: subscriptionApi.unsubscribeMany,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['subscriptions'] })
+      qc.invalidateQueries({ queryKey: ['feed'] })
+    },
+  })
+}
+
 // ─────────────────────────────────────────────
 // Feed hooks
 // ─────────────────────────────────────────────
