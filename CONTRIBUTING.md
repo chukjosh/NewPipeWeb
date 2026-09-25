@@ -1,62 +1,75 @@
-# Contributing to NewPipeWeb
+NewPipeWeb contribution guidelines
+===================================
 
-Thanks for considering a contribution. This document covers how the project is organized and what to do before opening a pull request.
+## AI policy
 
-## Branches
+* Generative AI is welcome here as long as it's used responsibly. If you use AI to write a contribution, you are still fully responsible for it. Before opening a PR, make sure you
+  * understand the project structure and where your change actually belongs,
+  * understand every line of the generated code, not just that it compiles,
+  * have actually run the relevant build (`./gradlew build` for backend, `pnpm run build` for frontend) and confirmed it passes, not just that an editor shows no errors,
+  * have reviewed the diff yourself, including checking for anything overly broad (e.g. a fix that touches unrelated files, or a security-relevant change that needs a second look).
+* AI is especially useful for diagnosing bugs, but make sure the actual root cause is fixed, not just the symptom. If AI proposes a fix, ask it to explain why the bug happens before applying anything.
+* AI-generated documentation is welcome, but check it against the real behavior of the code before submitting. Outdated or wrong docs are worse than no docs.
+* Don't paste an issue or PR description that AI generated without reading it yourself first. A vague or padded description makes review slower for everyone.
 
-- `dev` - active development happens here. All new work starts from `dev`.
-- `main` - stable, released code. Only updated from `dev` once changes have been reviewed and tested.
+## Issue reporting / feature requests
 
-Always branch off `dev`, and open your pull request against `dev`, not `main`.
+* **Already reported?** Check [existing issues](../../issues) first.
+* **Still relevant?** Confirm it reproduces on the latest `main`.
+* **One issue per report.** If you're hitting multiple unrelated problems, open separate issues so each can be tracked and closed independently.
+* **Include what you can:**
+  * Steps to reproduce
+  * What you expected vs what actually happened
+  * Environment (Docker vs local dev, OS, browser if relevant)
+  * Logs where relevant (`docker compose logs backend` / `docker compose logs frontend`), with secrets removed
+* Feature requests are welcome. Large or vague requests may get split into smaller, separately trackable pieces so each can be reviewed and merged independently.
 
-## Getting started
+## Code contribution
 
-See the main [README](./README.md) for prerequisites, running the app in development, and running it with Docker.
+### Guidelines
 
-## Making a change
+* Use descriptive names for variables, functions, and types. Avoid cryptic abbreviations.
+* Match the existing structure and conventions of the file you're editing rather than introducing a new pattern.
+* Keep PRs scoped to one issue or one fix. If you spot an unrelated bug while working on something else, open a separate issue for it instead of bundling it in.
 
-1. Fork the repo and create a branch off `dev`.
-2. Make your changes.
-3. Run the relevant build/checks before opening a PR (see below).
-4. Open a pull request against `dev`, with a clear description of what the change does and why.
-5. If your PR fixes an open issue, reference it in the description, e.g. `Fixes #12`.
+### Before starting development
 
-## Before opening a PR
+* If you want to work on an existing issue, leave a comment saying so first, this avoids duplicated effort.
+* If there's no existing issue for what you want to change, open one first describing what you're planning. This gives a chance for feedback before you spend time on something that might need a different approach.
 
-Please confirm the project actually builds with your changes:
+### Creating a Pull Request (PR)
 
-- Backend: `cd backend && ./gradlew build`
-- Frontend: `cd frontend && pnpm install && pnpm run build`
+* Branch off `dev` with a descriptive branch name. Never commit directly to `dev` or `main`.
+* Open your PR **against `dev`**, not `main`. `main` only receives changes once they've been reviewed and tested on `dev`.
+* **Test your code before submitting.** For backend changes, run `cd backend && ./gradlew build`. For frontend changes, run `cd frontend && pnpm install && pnpm run build`. Confirm both pass locally, don't rely solely on an editor's inline diagnostics.
+* If your PR fixes an open issue, say so in the description, e.g. `Fixes #12`, so it closes automatically on merge.
+* Keep commit messages descriptive. Prefixing with the type of change is encouraged where it fits:
+  * `feat: add download pause and resume controls`
+  * `fix: resolve shadowed thumbnailUrl in AddToPlaylistModal`
+  * `chore: update .gitignore for improved file exclusions`
+* Respond if changes are requested. A PR left unanswered for a long time may be closed.
 
-A PR that doesn't build will take longer to review and merge.
+## Building the app
 
-## Code style
+### Backend (Kotlin / Ktor)
 
-- Use descriptive names for variables, functions, and types. Avoid cryptic abbreviations.
-- Match the existing structure and conventions of the file you're editing rather than introducing a new pattern.
-- Keep changes focused. If you find an unrelated bug while working on something else, open a separate issue or PR for it rather than bundling it in.
+* Requires JDK 22.
+* From `backend/`, run `./gradlew run` to start it on `http://localhost:8080`. First run downloads dependencies, this takes a couple of minutes.
 
-## Commit messages
+### Frontend (React / Vite)
 
-Prefix commits with the type of change where it makes sense, for example:
+* Requires Node.js 22 LTS.
+* This project uses `pnpm`. From `frontend/`, run `pnpm install` then `pnpm run dev` to start on `http://localhost:5173`. The dev server proxies `/api` requests to the backend automatically.
 
-- `feat: add download pause and resume controls`
-- `fix: resolve shadowed thumbnailUrl in AddToPlaylistModal`
-- `chore: update .gitignore for improved file exclusions`
+### Full stack with Docker
 
-## Reporting bugs
+* From the project root, `docker compose up --build` runs backend, frontend, and nginx together. See the [README](./README.md) for ports, persistent data, and configuration details.
 
-When opening an issue, please include:
+### API docs
 
-- Steps to reproduce
-- What you expected to happen vs what actually happened
-- Environment details (Docker vs local dev, OS, browser if relevant)
-- Relevant logs (`docker compose logs backend` / `docker compose logs frontend`), with any secrets removed
+* Once the backend is running, an interactive Swagger UI is available at `/docs`, useful for checking request/response shapes while developing.
 
-## Feature requests
+## Communication
 
-Feature requests are welcome. If a request is broad, it may get split into smaller, separately trackable pieces so each can be reviewed and merged independently.
-
-## Questions
-
-If anything here is unclear, open an issue and ask.
+* Open an issue for bugs, feature requests, or questions about the project.
+* If you're planning a larger change, open an issue first to discuss the approach before investing significant time.
