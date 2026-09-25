@@ -1,0 +1,48 @@
+name: Bug report
+description: Something isn't working as expected
+labels: ["bug", "needs triage"]
+body:
+  - type: checkboxes
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this hasn't been reported
+          required: true
+        - label: I'm using the latest version (dev or main, whichever you pulled)
+          required: true
+  - type: dropdown
+    attributes:
+      label: Where does this happen?
+      options:
+        - Docker (docker compose up)
+        - Local dev (gradlew run / pnpm run dev)
+        - Desktop app (Tauri)
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Click on ...
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Logs
+      description: "docker compose logs backend / docker compose logs frontend, with secrets removed"
+      render: shell
+  - type: input
+    attributes:
+      label: Browser / OS
