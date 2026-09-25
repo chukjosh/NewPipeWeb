@@ -2,8 +2,19 @@
 
 A full-featured, self-hosted frontend for YouTube, SoundCloud, PeerTube and more, built on top of [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor).
 
-Licensed under [GPL-3.0](LICENSE) — the same license as NewPipeExtractor.
+Licensed under [GPL-3.0](LICENSE) - the same license as NewPipeExtractor.
 No Google account required. No ads. No tracking.
+
+> **Note:** This is an independent project, not affiliated with or endorsed by the
+> [NewPipe](https://github.com/TeamNewPipe/NewPipe) team. It's built on top of their
+> [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor) library, but is a
+> separate codebase with its own maintainers.
+>
+> NewPipeWeb exists to make the same private, ad-free viewing experience accessible from
+> any device with a browser, desktop, mobile, or otherwise, rather than being tied to a
+> single platform. This matters more as Google increasingly locks down what can be
+> sideloaded and run on Android, a web-based, self-hosted frontend isn't subject to
+> those restrictions the way a native Android app is.
 
 ---
 ## Branches
@@ -46,13 +57,13 @@ See the [CONTRIBUTING guide](./CONTRIBUTING.md) for setup, build checks, and cod
 |---|---|
 | 🔍 Search | Search YouTube, SoundCloud, PeerTube without an account |
 | 📺 Watch | Play videos with quality selector (144p–2160p) |
-| 🎵 Audio only | Switch to background audio mode — saves bandwidth |
+| 🎵 Audio only | Switch to background audio mode - saves bandwidth |
 | 🖼️ Picture in Picture | Float video in a small window while browsing |
 | 💬 Comments | Read comments without signing in |
 | 🔤 Subtitles | Select subtitle language; auto-generated subtitles supported |
 | ⏩ Resume | Automatically resumes where you left off |
 | 📡 Feed | Latest videos from subscribed channels |
-| 🔔 Subscriptions | Subscribe to channels — stored locally, no Google account |
+| 🔔 Subscriptions | Subscribe to channels - stored locally, no Google account |
 | 🔖 Watchlist | Save videos to watch later |
 | 📚 Playlists | Create and manage local playlists |
 | 🕐 History | Full watch history with resume positions |
@@ -278,7 +289,7 @@ gradlew.bat run
 
 The backend starts on **http://localhost:8080**.
 
-On first run Gradle downloads dependencies — this takes 1–3 minutes.
+On first run Gradle downloads dependencies - this takes 1–3 minutes.
 Subsequent starts are much faster.
 
 ### 2. Start the frontend
@@ -344,7 +355,7 @@ These persist across container restarts. Back them up to keep your data.
 ## Configuration
 
 The backend reads configuration from environment variables. Copy `.env.example` to `.env`
-in the project root and adjust as needed — `.env` is only read at container start,
+in the project root and adjust as needed - `.env` is only read at container start,
 so re-run `docker compose up -d` after changing it (a plain `restart` will not pick up changes).
 
 | Variable | Required | Description |
@@ -358,7 +369,7 @@ so re-run `docker compose up -d` after changing it (a plain `restart` will not p
 ALLOWED_ORIGINS=https://my.fqdn.tld
 ```
 
-By default (no `.env` needed), the app only trusts `localhost` and private network IPs —
+By default (no `.env` needed), the app only trusts `localhost` and private network IPs -
 hostnames are never resolved for CORS checks, so a domain must be explicitly added via
 `ALLOWED_ORIGINS` to avoid being rejected.
 
@@ -434,7 +445,7 @@ Output is in `desktop/src-tauri/target/release/bundle/`.
 
 **Home page** shows trending videos from YouTube.
 
-**Search** — type in the search bar at the top and press Enter or click the 🔍 icon.
+**Search** - type in the search bar at the top and press Enter or click the 🔍 icon.
 Results come from YouTube (and other supported services if the URL is recognized).
 
 Recent searches are saved locally and shown as you type.
@@ -443,13 +454,13 @@ Recent searches are saved locally and shown as you type.
 
 Click any video card to open the watch page.
 
-**Quality selector** — below the player toolbar, click any resolution badge to switch.
+**Quality selector** - below the player toolbar, click any resolution badge to switch.
 Your preferred quality is applied automatically (set in Settings).
 
-**Playback speed** — use the browser's native controls (right-click the video).
+**Playback speed** - use the browser's native controls (right-click the video).
 Your default speed is set in Settings.
 
-**Resume** — if you've watched part of a video before, it automatically picks up
+**Resume** - if you've watched part of a video before, it automatically picks up
 from where you left off.
 
 ### Subtitles
@@ -474,7 +485,7 @@ to full mode.
 ### Background Audio Mode
 
 Click the **Audio only** button to switch the player to an audio-only stream.
-This is useful for music or podcasts — it uses significantly less data and CPU
+This is useful for music or podcasts - it uses significantly less data and CPU
 than video streams.
 
 Click the button again to switch back to video.
@@ -482,7 +493,7 @@ Click the button again to switch back to video.
 ### Subscriptions
 
 On any **Channel** page, click **Subscribe**. The subscription is saved locally
-in the database — no Google account needed.
+in the database - no Google account needed.
 
 The **Feed** page shows the latest videos from all your subscribed channels,
 sorted by upload date.
@@ -582,15 +593,15 @@ Open **Settings** from the left sidebar (gear icon at the bottom).
 
 | Setting | Default | Description |
 |---|---|---|
-| Enable SponsorBlock | Off | Master toggle — must be enabled for any skipping to happen |
+| Enable SponsorBlock | Off | Master toggle - must be enabled for any skipping to happen |
 | Sponsor segments | ✅ | Paid promotions integrated into the video |
-| Self-promotion | — | Creator's own unpaid promotions |
-| Interaction reminders | — | Like/subscribe/comment calls to action |
-| Intro / title card | — | Opening animation or title card |
-| Outro / credits | — | Closing credits or endscreen |
-| Preview of content | — | Teaser for what's coming up |
-| Off-topic (music) | — | Non-music sections in music videos |
-| Filler / tangent | — | Filler content or tangents unrelated to the topic |
+| Self-promotion | - | Creator's own unpaid promotions |
+| Interaction reminders | - | Like/subscribe/comment calls to action |
+| Intro / title card | - | Opening animation or title card |
+| Outro / credits | - | Closing credits or endscreen |
+| Preview of content | - | Teaser for what's coming up |
+| Off-topic (music) | - | Non-music sections in music videos |
+| Filler / tangent | - | Filler content or tangents unrelated to the topic |
 
 See [SponsorBlock categories](https://wiki.sponsor.ajay.app/w/Segment_Categories) for detailed descriptions.
 
@@ -713,13 +724,8 @@ once the backend is running.
 |---|---|---|
 | GET | `/subscriptions` | List all subscriptions |
 | POST | `/subscriptions` | Subscribe to a channel |
-| DELETE | `/subscriptions` | Delete multiple subscriptions by ID |
 | DELETE | `/subscriptions/{id}` | Unsubscribe |
 | GET | `/feed` | Latest videos from subscribed channels |
-
-Subscription imports accept `overwrite=true` to replace the existing subscription
-list with the imported channels. Feed results can be viewed newest-first or
-oldest-first using the sort control on the Feed page.
 | GET | `/subscriptions/export?format=json\|txt` | Export subscriptions as JSON or a plain text list of channel URLs |
 | POST | `/subscriptions/import` | Import subscriptions from JSON or plain text |
 
@@ -819,7 +825,7 @@ NewPipeWeb/
 **`Could not find com.github.TeamNewPipe:NewPipeExtractor`**
 - Make sure JitPack is in your repositories in `build.gradle.kts`
 - Run `./gradlew dependencies` to force a dependency refresh
-- Check your internet connection — JitPack needs to build the library on first fetch
+- Check your internet connection - JitPack needs to build the library on first fetch
 
 **`Port 8080 already in use`**
 - Something else is running on 8080
@@ -828,11 +834,11 @@ NewPipeWeb/
 
 ### Videos won't play
 
-**Stream URLs expire** — NewPipeExtractor stream URLs are valid for roughly 6 hours.
+**Stream URLs expire** - NewPipeExtractor stream URLs are valid for roughly 6 hours.
 If you leave a video paused for a long time and come back, you may need to refresh
 the page to get fresh stream URLs.
 
-**`No playable stream found`** — YouTube occasionally changes its internal API.
+**`No playable stream found`** - YouTube occasionally changes its internal API.
 Check the [NewPipeExtractor releases](https://github.com/TeamNewPipe/NewPipeExtractor/releases)
 for a newer version and update `build.gradle.kts`.
 
@@ -875,14 +881,14 @@ consistent pnpm version.
 
 ### Desktop app (Tauri)
 
-**`cargo not found`** — Install Rust: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+**`cargo not found`** - Install Rust: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
 
-**`WebKit2GTK not found`** (Linux) — Install system dependencies:
+**`WebKit2GTK not found`** (Linux) - Install system dependencies:
 ```bash
 sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev
 ```
 
-**White screen in desktop window** — Make sure both the backend (`./gradlew run`)
+**White screen in desktop window** - Make sure both the backend (`./gradlew run`)
 and the frontend dev server (`pnpm run dev`) are running before launching Tauri.
 
 ---
