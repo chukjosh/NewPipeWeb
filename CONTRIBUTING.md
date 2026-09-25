@@ -73,3 +73,5 @@ NewPipeWeb contribution guidelines
 
 * Open an issue for bugs, feature requests, or questions about the project.
 * If you're planning a larger change, open an issue first to discuss the approach before investing significant time.
+
+Thank you.
