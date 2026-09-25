@@ -1,0 +1,24 @@
+name: Feature request
+description: Suggest something new
+labels: ["feature request", "needs triage"]
+body:
+  - type: checkboxes
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this hasn't been requested
+          required: true
+  - type: textarea
+    attributes:
+      label: What do you want to be able to do?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Why is this useful?
+      description: What problem does it solve, or what workflow does it improve?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Any additional context
